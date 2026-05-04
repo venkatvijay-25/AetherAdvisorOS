@@ -1909,9 +1909,16 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <Guardrail label="Mina Patel" value="Needs delegation relief on follow-up drafting" tone="danger" />
           <Guardrail label="Jon Bell" value="Compliance patterns ready for AI policy tuning" tone="good" />
         </div>
+        <div className="suggested-delegate-callout">
+          <UserPlus size={17} />
+          <span>
+            <strong>Suggested delegate ready</strong>
+            <small>Priya Shah is recommended by the delegation review and can be added from this form.</small>
+          </span>
+        </div>
         <div className="toolbar-row">
           <button className="secondary-action" onClick={() => setTeamFormOpen((value) => !value)} type="button">
-            <UserPlus size={16} /> Add team member
+            <UserPlus size={16} /> Add suggested delegate
           </button>
         </div>
         {teamFormOpen && (

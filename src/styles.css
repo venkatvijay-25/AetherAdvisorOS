@@ -1235,6 +1235,24 @@ button.team-panel {
   display: block;
 }
 
+.suggested-delegate-callout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  border: 1px solid #c9ddf2;
+  border-radius: 8px;
+}
+
+.suggested-delegate-callout strong,
+.suggested-delegate-callout small {
+  display: block;
+}
+
 .inline-form label {
   display: grid;
   gap: 6px;
