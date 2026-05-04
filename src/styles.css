@@ -2731,3 +2731,119 @@ small,
   background: var(--info-bg);
   border-color: var(--info-border);
 }
+
+/* Final institutional polish from design review */
+.view-header h1 {
+  max-width: none;
+  color: var(--text);
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  line-height: 1.18 !important;
+  letter-spacing: 0 !important;
+  white-space: normal;
+}
+
+.brand-mark {
+  color: #ffffff;
+  background: var(--brand) !important;
+  border: 1px solid rgba(248, 250, 252, 0.12);
+  box-shadow: none !important;
+}
+
+.topbar .segmented button.active {
+  color: #ffffff;
+  background: var(--blue) !important;
+  border-color: var(--blue);
+  box-shadow: none;
+}
+
+.topbar .segmented button.active:hover {
+  background: var(--blue-hover) !important;
+  border-color: var(--blue-hover);
+}
+
+.review-panel .status-pill.status-open {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.sidebar .status-pill {
+  min-height: 18px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border-color: rgba(253, 230, 138, 0.36);
+}
+
+.sidebar .status-pill.tone-warn {
+  color: #facc15;
+  background: rgba(146, 64, 14, 0.16);
+  border-color: rgba(253, 230, 138, 0.32);
+}
+
+.sidebar .status-pill.tone-danger {
+  color: #fca5a5;
+  background: rgba(153, 27, 27, 0.18);
+  border-color: rgba(254, 202, 202, 0.28);
+}
+
+.allocation-segment.asset-pa1,
+.asset-row.asset-pa1 .progress-fill {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.allocation-segment.asset-pa2,
+.asset-row.asset-pa2 .progress-fill {
+  background: #d97706 !important;
+  border-color: #d97706 !important;
+}
+
+.allocation-segment.asset-pa3,
+.asset-row.asset-pa3 .progress-fill {
+  background: #475569 !important;
+  border-color: #475569 !important;
+}
+
+.allocation-segment.asset-pa4,
+.asset-row.asset-pa4 .progress-fill {
+  background: #0f766e !important;
+  border-color: #0f766e !important;
+}
+
+.allocation-segment.asset-pa5,
+.asset-row.asset-pa5 .progress-fill {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.allocation-segment.asset-pa6,
+.asset-row.asset-pa6 .progress-fill {
+  background: var(--blue) !important;
+  border-color: var(--blue) !important;
+}
+
+.asset-legend.asset-pa1 .risk-dot {
+  color: #16a34a;
+}
+
+.asset-legend.asset-pa2 .risk-dot {
+  color: #d97706;
+}
+
+.asset-legend.asset-pa3 .risk-dot {
+  color: #475569;
+}
+
+.asset-legend.asset-pa4 .risk-dot {
+  color: #0f766e;
+}
+
+.asset-legend.asset-pa5 .risk-dot {
+  color: #dc2626;
+}
+
+.asset-legend.asset-pa6 .risk-dot {
+  color: var(--blue);
+}

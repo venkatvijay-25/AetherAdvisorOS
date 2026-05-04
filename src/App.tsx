@@ -1626,7 +1626,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         <div className="allocation-bar">
           {portfolioAssets.map((asset) => (
             <span
-              className={clsx("allocation-segment", `tone-${asset.risk}`)}
+              className={clsx("allocation-segment", `tone-${asset.risk}`, `asset-${asset.id}`)}
               key={asset.id}
               style={{ width: `${asset.weight}%` }}
               title={`${asset.name}: ${asset.weight}%`}
@@ -1635,7 +1635,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         </div>
         <div className="allocation-legend">
           {portfolioAssets.map((asset) => (
-            <span key={asset.id}>
+            <span className={clsx("asset-legend", `asset-${asset.id}`)} key={asset.id}>
               <RiskDot tone={asset.risk} /> {asset.name} {asset.weight}%
             </span>
           ))}
@@ -1655,7 +1655,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         </div>
         <div className="asset-table">
           {portfolioAssets.map((asset) => (
-            <div className="asset-row" key={asset.id}>
+            <div className={clsx("asset-row", `asset-${asset.id}`)} key={asset.id}>
               <span>
                 <strong>{asset.name}</strong>
                 <small>{asset.type} - {asset.note}</small>
@@ -2245,7 +2245,9 @@ function MetricTile({
 }
 
 function StatusPill({ label, tone }: { label: string; tone: StatusTone }) {
-  return <span className={clsx("status-pill", `tone-${tone}`)}>{label}</span>;
+  const statusClass = `status-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+
+  return <span className={clsx("status-pill", `tone-${tone}`, statusClass)}>{label}</span>;
 }
 
 function RiskDot({ tone }: { tone: StatusTone }) {
