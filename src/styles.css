@@ -1878,6 +1878,40 @@ small,
   border-color: var(--line);
 }
 
+.progress-fill.tone-good,
+.allocation-segment.tone-good {
+  background: #15be53;
+  border-color: #15be53;
+}
+
+.progress-fill.tone-warn,
+.allocation-segment.tone-warn {
+  background: #9b6829;
+  border-color: #9b6829;
+}
+
+.progress-fill.tone-danger,
+.allocation-segment.tone-danger {
+  background: #ea2261;
+  border-color: #ea2261;
+}
+
+.progress-fill.tone-info,
+.allocation-segment.tone-info {
+  background: #533afd;
+  border-color: #533afd;
+}
+
+.progress-fill.tone-neutral,
+.allocation-segment.tone-neutral {
+  background: #64748d;
+  border-color: #64748d;
+}
+
+.allocation-segment {
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.55);
+}
+
 .rank-value,
 .numeric,
 .timeline-time,
