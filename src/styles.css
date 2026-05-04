@@ -2847,3 +2847,8 @@ small,
 .asset-legend.asset-pa6 .risk-dot {
   color: var(--blue);
 }
+
+.view-header p,
+.view-header p * {
+  color: var(--muted) !important;
+}

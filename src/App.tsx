@@ -713,7 +713,7 @@ function Dashboard({
             ? "Open reviews, audit exceptions, escalations, and evidence packages."
             : role === "Client"
               ? "Shared plan progress, upcoming meetings, and portfolio context."
-              : "Priority meetings, approval gates, household risk, and audit posture."
+              : "Today's advisor operating queue across client work and evidence."
         }
       />
 
