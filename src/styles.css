@@ -200,6 +200,14 @@ button:disabled {
   box-shadow: var(--shadow);
 }
 
+.search-caption {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .search-result {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -278,6 +286,43 @@ button:disabled {
 
 button.agent-health {
   border-color: #c6e6e3;
+}
+
+.health-wrapper {
+  position: relative;
+}
+
+.health-popover {
+  position: absolute;
+  z-index: 20;
+  top: 48px;
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: 320px;
+  padding: 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.health-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.health-row:hover {
+  border-color: #bfd5e3;
 }
 
 .role-banner {
@@ -432,6 +477,15 @@ button.metric-tile {
 
 .surface {
   padding: 18px;
+}
+
+.focus-results,
+.alert-surface {
+  border-left: 4px solid var(--blue);
+}
+
+.alert-surface {
+  border-left-color: var(--red);
 }
 
 .two-column {
@@ -613,6 +667,10 @@ button.metric-tile {
 
 .asset-row {
   grid-template-columns: minmax(0, 1.35fr) 136px minmax(150px, 0.7fr) auto;
+}
+
+.asset-row.human-task {
+  background: #fbfcfc;
 }
 
 .approval-row {

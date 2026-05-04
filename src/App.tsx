@@ -31,6 +31,8 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Target,
+  UserPlus,
   Upload,
   Users,
   X,
@@ -48,13 +50,16 @@ import {
 import type {
   Agent,
   AuditEvent,
+  Account,
   Client,
   ComplianceReview,
+  Goal,
   Meeting,
   MeetingAction,
   NavItem,
   Role,
   StatusTone,
+  TeamMember,
   ViewKey,
 } from "./types";
 
@@ -122,6 +127,8 @@ function App() {
   const [activeView, setActiveView] = useState<ViewKey>("dashboard");
   const [role, setRole] = useState<Role>("Advisor");
   const [query, setQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [agentHealthOpen, setAgentHealthOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState(clients[0].id);
   const [selectedMeetingId, setSelectedMeetingId] = useState(meetings[0].id);
   const [actions, setActions] = useState<MeetingAction[]>(initialMeetingActions);
@@ -246,6 +253,61 @@ function App() {
 
     return resultSet.slice(0, 8);
   }, [agents, auditEvents, query, reviews]);
+
+  const suggestedSearchResults = useMemo<SearchResult[]>(
+    () => [
+      {
+        id: "suggest-client",
+        label: selectedClient.household,
+        detail: "Open selected household profile",
+        tone: selectedClient.retentionRisk,
+        view: "clients",
+        clientId: selectedClient.id,
+      },
+      {
+        id: "suggest-meeting",
+        label: "Meeting history",
+        detail: "Open prep, transcript, and recap workspace",
+        tone: "info",
+        view: "meeting",
+        clientId: selectedClient.id,
+      },
+      {
+        id: "suggest-compliance",
+        label: "Open compliance reviews",
+        detail: `${openReviews.length} open items require supervision`,
+        tone: openReviews.length ? "danger" : "good",
+        view: "compliance",
+      },
+      {
+        id: "suggest-agent",
+        label: "Agent health",
+        detail: `${agentHealth}% aggregate confidence across ${agents.length} agents`,
+        tone: agentHealth > 85 ? "good" : "warn",
+        view: "agents",
+      },
+      {
+        id: "suggest-ips",
+        label: "IPS exceptions",
+        detail: "Single issuer and held-away insurance exceptions",
+        tone: "danger",
+        view: "portfolio",
+        clientId: selectedClient.id,
+      },
+    ],
+    [agentHealth, agents.length, openReviews.length, selectedClient],
+  );
+
+  const visibleSearchResults = query.trim() ? searchResults : suggestedSearchResults;
+
+  const openSearchResult = (result: SearchResult) => {
+    if (result.clientId) setSelectedClientId(result.clientId);
+    const meeting = meetings.find((item) => item.clientId === result.clientId);
+    if (result.view === "meeting" && meeting) setSelectedMeetingId(meeting.id);
+    setActiveView(result.view);
+    setQuery("");
+    setSearchFocused(false);
+  };
 
   const addAudit = (
     category: AuditEvent["category"],
@@ -505,25 +567,29 @@ function App() {
               <Search size={18} />
               <input
                 aria-label="Search clients and work"
+                onBlur={() => window.setTimeout(() => setSearchFocused(false), 120)}
+                onFocus={() => setSearchFocused(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && visibleSearchResults[0]) {
+                    openSearchResult(visibleSearchResults[0]);
+                  }
+                }}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search clients, assets, agents, compliance"
                 value={query}
               />
             </div>
-            {query.trim() && (
-              <div className="search-results">
-                {searchResults.length ? (
-                  searchResults.map((result) => (
+            {(searchFocused || query.trim()) && (
+              <div className="search-results" onMouseDown={(event) => event.preventDefault()}>
+                <div className="search-caption">
+                  {query.trim() ? "Search results" : "Suggested jumps"}
+                </div>
+                {visibleSearchResults.length ? (
+                  visibleSearchResults.map((result) => (
                     <button
                       className="search-result"
                       key={result.id}
-                      onClick={() => {
-                        if (result.clientId) setSelectedClientId(result.clientId);
-                        const meeting = meetings.find((item) => item.clientId === result.clientId);
-                        if (result.view === "meeting" && meeting) setSelectedMeetingId(meeting.id);
-                        setActiveView(result.view);
-                        setQuery("");
-                      }}
+                      onClick={() => openSearchResult(result)}
                       type="button"
                     >
                       <RiskDot tone={result.tone} />
@@ -553,10 +619,34 @@ function App() {
                 </button>
               ))}
             </div>
-            <button className="agent-health" onClick={() => setActiveView("agents")} type="button">
-              <Activity size={17} />
-              <span>{agentHealth}% agent health</span>
-            </button>
+            <div className="health-wrapper">
+              <button className="agent-health" onClick={() => setAgentHealthOpen((value) => !value)} type="button">
+                <Activity size={17} />
+                <span>{agentHealth}% agent health</span>
+              </button>
+              {agentHealthOpen && (
+                <div className="health-popover">
+                  <div className="search-caption">Agent health drill-down</div>
+                  {agents.map((agent) => (
+                    <button
+                      className="health-row"
+                      key={agent.id}
+                      onClick={() => {
+                        setActiveView("agents");
+                        setAgentHealthOpen(false);
+                      }}
+                      type="button"
+                    >
+                      <RiskDot tone={agent.confidence > 85 ? "good" : agent.status === "Paused" ? "neutral" : "warn"} />
+                      <span>
+                        <strong>{agent.name}</strong>
+                        <small>{agent.confidence}% confidence - {agent.status}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -605,9 +695,12 @@ function Dashboard({
   setSelectedClientId,
   setSelectedMeetingId,
 }: DashboardProps) {
+  const [dashboardFilter, setDashboardFilter] = useState<"risk" | "approvals" | "reviews" | "cleared" | null>(null);
   const totalAum = sum(clients.map((client) => client.aum));
   const criticalHouseholds = clients.filter((client) => client.retentionRisk !== "good").length;
   const approvedToday = actions.filter((action) => action.status === "Approved").length;
+  const atRiskClients = clients.filter((client) => client.retentionRisk !== "good");
+  const approvedActions = actions.filter((action) => action.status === "Approved");
 
   return (
     <div className="view-stack">
@@ -625,10 +718,94 @@ function Dashboard({
 
       <div className="metric-grid">
         <MetricTile icon={CircleDollarSign} label="AUM covered" onClick={() => setActiveView("portfolio")} value={formatMoney(totalAum)} />
-        <MetricTile icon={AlertTriangle} label="At-risk households" onClick={() => setActiveView("clients")} tone="warn" value={`${criticalHouseholds}`} />
-        <MetricTile icon={ClipboardCheck} label="Pending approvals" onClick={() => setActiveView("meeting")} tone="info" value={`${pendingActions.length}`} />
-        <MetricTile icon={ShieldCheck} label={role === "Compliance" ? "Open reviews" : "Cleared today"} onClick={() => setActiveView("compliance")} tone={role === "Compliance" ? "danger" : "good"} value={`${role === "Compliance" ? openReviews.length : approvedToday}`} />
+        <MetricTile icon={AlertTriangle} label="At-risk households" onClick={() => setDashboardFilter("risk")} tone="warn" value={`${criticalHouseholds}`} />
+        <MetricTile icon={ClipboardCheck} label="Pending approvals" onClick={() => setDashboardFilter("approvals")} tone="info" value={`${pendingActions.length}`} />
+        <MetricTile icon={ShieldCheck} label={role === "Compliance" ? "Open reviews" : "Cleared today"} onClick={() => setDashboardFilter(role === "Compliance" ? "reviews" : "cleared")} tone={role === "Compliance" ? "danger" : "good"} value={`${role === "Compliance" ? openReviews.length : approvedToday}`} />
       </div>
+
+      {dashboardFilter && (
+        <section className="surface focus-results">
+          <div className="section-toolbar">
+            <SectionTitle
+              icon={dashboardFilter === "risk" ? AlertTriangle : dashboardFilter === "approvals" ? ClipboardCheck : ShieldCheck}
+              title={
+                dashboardFilter === "risk"
+                  ? "At-Risk Households"
+                  : dashboardFilter === "approvals"
+                    ? "Pending Approval Queue"
+                    : dashboardFilter === "reviews"
+                      ? "Open Review Queue"
+                      : "Cleared Actions"
+              }
+            />
+            <button className="text-action" onClick={() => setDashboardFilter(null)} type="button">
+              Clear filter <X size={15} />
+            </button>
+          </div>
+          <div className="client-rank-list">
+            {dashboardFilter === "risk" &&
+              atRiskClients.map((client) => (
+                <button
+                  className="rank-row"
+                  key={client.id}
+                  onClick={() => {
+                    setSelectedClientId(client.id);
+                    setActiveView("clients");
+                  }}
+                  type="button"
+                >
+                  <RiskDot tone={client.retentionRisk} />
+                  <span>
+                    <strong>{client.household}</strong>
+                    <small>{client.primaryGoal}</small>
+                  </span>
+                  <span className="rank-value">{toneLabel[client.retentionRisk]}</span>
+                </button>
+              ))}
+            {dashboardFilter === "approvals" &&
+              pendingActions.map((action) => (
+                <button
+                  className="rank-row"
+                  key={action.id}
+                  onClick={() => {
+                    setSelectedClientId(action.clientId);
+                    setActiveView("meeting");
+                  }}
+                  type="button"
+                >
+                  <RiskDot tone={action.risk} />
+                  <span>
+                    <strong>{action.title}</strong>
+                    <small>{clients.find((client) => client.id === action.clientId)?.household} - {action.detail}</small>
+                  </span>
+                  <span className="rank-value">{action.approvalGate}</span>
+                </button>
+              ))}
+            {dashboardFilter === "reviews" &&
+              openReviews.map((review) => (
+                <button className="rank-row" key={review.id} onClick={() => setActiveView("compliance")} type="button">
+                  <RiskDot tone={review.severity} />
+                  <span>
+                    <strong>{review.title}</strong>
+                    <small>{review.category}</small>
+                  </span>
+                  <span className="rank-value">{review.status}</span>
+                </button>
+              ))}
+            {dashboardFilter === "cleared" &&
+              (approvedActions.length ? approvedActions : [{ id: "none", title: "No actions cleared yet", detail: "Approved actions will appear here.", risk: "neutral" as StatusTone, approvalGate: "Advisor" as const }]).map((action) => (
+                <div className="rank-row" key={action.id}>
+                  <RiskDot tone={action.risk} />
+                  <span>
+                    <strong>{action.title}</strong>
+                    <small>{action.detail}</small>
+                  </span>
+                  <span className="rank-value">{action.approvalGate}</span>
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
 
       <div className="two-column">
         <section className="surface">
@@ -742,7 +919,49 @@ function ClientHub({
   setActiveView,
   setSelectedClientId,
 }: ClientHubProps) {
+  const [addedGoals, setAddedGoals] = useState<Record<string, Goal[]>>({});
+  const [addedAccounts, setAddedAccounts] = useState<Record<string, Account[]>>({});
   const clientRequests = requestedDocuments.filter((item) => item.startsWith(selectedClient.household));
+  const displayedGoals = [...selectedClient.goals, ...(addedGoals[selectedClient.id] ?? [])];
+  const displayedAccounts = [...selectedClient.accounts, ...(addedAccounts[selectedClient.id] ?? [])];
+  const connectionNote = (relation: string) => {
+    if (relation === "Spouse") return "Joint governance influence and foundation oversight.";
+    if (relation === "Daughter") return "Next-gen decision maker with rising retention influence.";
+    if (relation === "Son") return "Education and engagement track for future succession.";
+    if (relation === "Mother") return "Elder generation values anchor for continuity planning.";
+    if (relation === "Nephew") return "Operating-business successor candidate under observation.";
+    return "Beneficiary and family decision stakeholder.";
+  };
+  const addGoal = () => {
+    const goal: Goal = {
+      id: `goal-${Date.now()}`,
+      title: "New advisor-defined planning milestone",
+      target: "Draft target",
+      confidence: 50,
+      owner: "Advisor",
+      status: "info",
+    };
+
+    setAddedGoals((items) => ({
+      ...items,
+      [selectedClient.id]: [goal, ...(items[selectedClient.id] ?? [])],
+    }));
+  };
+  const addAccount = () => {
+    const account: Account = {
+      id: `account-${Date.now()}`,
+      name: "New held-away account",
+      custodian: "Client reported",
+      value: 0,
+      allocation: "Pending data",
+      status: "warn",
+    };
+
+    setAddedAccounts((items) => ({
+      ...items,
+      [selectedClient.id]: [account, ...(items[selectedClient.id] ?? [])],
+    }));
+  };
 
   return (
     <div className="view-stack">
@@ -783,7 +1002,7 @@ function ClientHub({
                 </div>
                 <StatusPill tone={member.sentiment} label={member.influence} />
                 <span>{member.priority}</span>
-                {index > 0 && <small>Connected through family council and estate documents</small>}
+                {index > 0 && <small>{connectionNote(member.relation)}</small>}
               </div>
             ))}
           </div>
@@ -832,9 +1051,14 @@ function ClientHub({
 
       <div className="three-column">
         <section className="surface">
-          <SectionTitle icon={Landmark} title="Accounts" />
+          <div className="section-toolbar">
+            <SectionTitle icon={Landmark} title="Accounts" />
+            <button className="secondary-action" onClick={addAccount} type="button">
+              <Plus size={16} /> Add held-away
+            </button>
+          </div>
           <div className="data-list">
-            {selectedClient.accounts.map((account) => (
+            {displayedAccounts.map((account) => (
               <div className="data-row" key={account.id}>
                 <span>
                   <strong>{account.name}</strong>
@@ -848,9 +1072,14 @@ function ClientHub({
         </section>
 
         <section className="surface">
-          <SectionTitle icon={Gauge} title="Goals" />
+          <div className="section-toolbar">
+            <SectionTitle icon={Gauge} title="Goals" />
+            <button className="secondary-action" onClick={addGoal} type="button">
+              <Target size={16} /> Add goal
+            </button>
+          </div>
           <div className="data-list">
-            {selectedClient.goals.map((goal) => (
+            {displayedGoals.map((goal) => (
               <div className="goal-row" key={goal.id}>
                 <div className="goal-heading">
                   <span>
@@ -939,15 +1168,26 @@ function MeetingAssistant({
 }: MeetingAssistantProps) {
   const [meetingStage, setMeetingStage] = useState<"Prep" | "Live" | "Follow-up">("Prep");
   const [transcriptDraft, setTranscriptDraft] = useState("");
+  const [processedSignals, setProcessedSignals] = useState<string[]>([]);
   const [recapVisible, setRecapVisible] = useState(true);
   const meeting =
     meetingList.find((item) => item.id === selectedMeetingId) ??
     meetingList.find((item) => item.clientId === selectedClient.id) ??
     meetingList[0];
   const clientActions = actions.filter((action) => action.clientId === selectedClient.id);
-  const transcriptLines = transcriptDraft.trim()
-    ? [...meeting.transcript, ...transcriptDraft.split("\n").filter(Boolean)]
-    : meeting.transcript;
+  const transcriptLines = [...meeting.transcript, ...processedSignals];
+  const processTranscript = () => {
+    const draft = transcriptDraft.trim();
+    if (!draft) return;
+
+    const firstLine = draft.split("\n").find(Boolean) ?? draft;
+    setProcessedSignals((items) => [
+      `Extracted concern: ${firstLine.slice(0, 110)}${firstLine.length > 110 ? "..." : ""}`,
+      "Action candidate: update recap, source evidence, and approval queue from pasted transcript.",
+      ...items,
+    ]);
+    setTranscriptDraft("");
+  };
 
   return (
     <div className="view-stack">
@@ -1019,6 +1259,12 @@ function MeetingAssistant({
             placeholder="Paste transcript notes or meeting audio summary here"
             value={transcriptDraft}
           />
+          <div className="toolbar-row">
+            <button className="primary-action" disabled={!transcriptDraft.trim()} onClick={processTranscript} type="button">
+              <Sparkles size={16} /> Extract signals
+            </button>
+            <small>{processedSignals.length} extracted signals added in this session</small>
+          </div>
         </section>
       </div>
 
@@ -1296,6 +1542,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
   const [salePercent, setSalePercent] = useState(12);
   const [liquidityMonths, setLiquidityMonths] = useState(18);
   const [period, setPeriod] = useState("YTD");
+  const [ipsExpanded, setIpsExpanded] = useState(true);
   const projectedTaxSavings = Math.round(salePercent * 150000);
 
   return (
@@ -1310,8 +1557,10 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         <MetricTile icon={CircleDollarSign} label="Tracked assets" value={formatMoney(totalPortfolio)} />
         <MetricTile icon={AlertTriangle} label="Concentration" tone="warn" value="20%" />
         <MetricTile icon={Gauge} label="Liquidity runway" tone="good" value="18 mo" />
-        <MetricTile icon={FileCheck2} label="IPS exceptions" tone="danger" value="2" />
+        <MetricTile icon={FileCheck2} label="IPS exceptions" onClick={() => setIpsExpanded((value) => !value)} tone="danger" value="2" />
       </div>
+
+      {ipsExpanded && <IpsExceptions />}
 
       <section className="surface">
         <SectionTitle icon={BarChart3} title="Allocation Overview" />
@@ -1385,30 +1634,88 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         </div>
       </section>
 
-      <section className="surface">
-        <SectionTitle icon={FileCheck2} title="IPS Exceptions" />
-        <div className="data-list">
-          <div className="data-row single">
-            <span>
-              <strong>Single issuer exposure exceeds target range</strong>
-              <small>Chen founder stock is 20% of enterprise exposure; IPS target is below 15% unless a sale plan is active.</small>
-            </span>
-            <StatusPill tone="warn" label="Open" />
-          </div>
-          <div className="data-row single">
-            <span>
-              <strong>Held-away insurance metadata incomplete</strong>
-              <small>Walker annuity lacks beneficiary, fee, and surrender-window evidence.</small>
-            </span>
-            <StatusPill tone="danger" label="Open" />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
 
+function IpsExceptions() {
+  return (
+    <section className="surface alert-surface">
+      <SectionTitle icon={FileCheck2} title="IPS Exceptions" />
+      <div className="data-list">
+        <div className="data-row single">
+          <span>
+            <strong>Single issuer exposure exceeds target range</strong>
+            <small>Chen founder stock is 20% of enterprise exposure; IPS target is below 15% unless a sale plan is active.</small>
+          </span>
+          <StatusPill tone="warn" label="Open" />
+        </div>
+        <div className="data-row single">
+          <span>
+            <strong>Held-away insurance metadata incomplete</strong>
+            <small>Walker annuity lacks beneficiary, fee, and surrender-window evidence.</small>
+          </span>
+          <StatusPill tone="danger" label="Open" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TeamOs({ actions }: { actions: MeetingAction[] }) {
+  const [extraTeam, setExtraTeam] = useState<TeamMember[]>([]);
+  const people = [...team, ...extraTeam];
+  const humanTasks = [
+    {
+      id: "human-1",
+      title: "Call Elaine before board vote",
+      owner: "Sarah Mitchell",
+      due: "Today",
+      risk: "warn" as StatusTone,
+      status: "Scheduled",
+      detail: "Confirm liquidity language and family council framing.",
+    },
+    {
+      id: "human-2",
+      title: "Review recap tax assumptions",
+      owner: "David Rao",
+      due: "Today",
+      risk: "good" as StatusTone,
+      status: "In progress",
+      detail: "Compare 10b5-1 scenario and charitable lot strategy.",
+    },
+    {
+      id: "human-3",
+      title: "Prepare Walker attorney packet",
+      owner: "Mina Patel",
+      due: "Tomorrow",
+      risk: "danger" as StatusTone,
+      status: "Blocked",
+      detail: "Waiting on trust restatement and healthcare proxy.",
+    },
+    {
+      id: "human-4",
+      title: "Approve AI policy exception",
+      owner: "Jon Bell",
+      due: "This week",
+      risk: "info" as StatusTone,
+      status: "Review",
+      detail: "Review advisor override threshold for client-ready drafts.",
+    },
+  ];
+  const addTeamMember = () => {
+    const member: TeamMember = {
+      id: `tm-${Date.now()}`,
+      name: "Priya Shah",
+      role: "Associate Advisor",
+      capacity: 42,
+      focus: "Newly assigned onboarding and review support",
+      risk: "info",
+    };
+
+    setExtraTeam((items) => (items.some((item) => item.name === member.name) ? items : [...items, member]));
+  };
+
   return (
     <div className="view-stack">
       <ViewHeader
@@ -1418,7 +1725,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
       />
 
       <div className="team-grid">
-        {team.map((member) => (
+        {people.map((member) => (
           <article className="team-panel" key={member.id}>
             <div className="recommendation-top">
               <div>
@@ -1450,6 +1757,17 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
               <StatusPill tone={action.status === "Approved" ? "good" : action.status === "Pending" ? "warn" : "neutral"} label={action.status} />
             </div>
           ))}
+          {humanTasks.map((task) => (
+            <div className="asset-row human-task" key={task.id}>
+              <span>
+                <strong>{task.title}</strong>
+                <small>{task.detail}</small>
+              </span>
+              <span className="numeric">{task.owner}</span>
+              <StatusPill tone={task.risk} label={task.due} />
+              <StatusPill tone={task.risk} label={task.status} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1471,8 +1789,8 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <Guardrail label="Mina Patel" value="Needs delegation relief on follow-up drafting" tone="danger" />
           <Guardrail label="Jon Bell" value="Compliance patterns ready for AI policy tuning" tone="good" />
         </div>
-        <button className="secondary-action" type="button">
-          <Plus size={16} /> Add team member
+        <button className="secondary-action" onClick={addTeamMember} type="button">
+          <UserPlus size={16} /> Add team member
         </button>
       </section>
     </div>
