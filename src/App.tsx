@@ -307,6 +307,7 @@ function App() {
     setActiveView(result.view);
     setQuery("");
     setSearchFocused(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const addAudit = (
@@ -793,14 +794,24 @@ function Dashboard({
                 </button>
               ))}
             {dashboardFilter === "cleared" &&
-              (approvedActions.length ? approvedActions : [{ id: "none", title: "No actions cleared yet", detail: "Approved actions will appear here.", risk: "neutral" as StatusTone, approvalGate: "Advisor" as const }]).map((action) => (
-                <div className="rank-row" key={action.id}>
-                  <RiskDot tone={action.risk} />
+              (approvedActions.length ? (
+                approvedActions.map((action) => (
+                  <div className="rank-row" key={action.id}>
+                    <RiskDot tone={action.risk} />
+                    <span>
+                      <strong>{action.title}</strong>
+                      <small>{action.detail}</small>
+                    </span>
+                    <span className="rank-value">{action.approvalGate}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-work-state">
+                  <Check size={18} />
                   <span>
-                    <strong>{action.title}</strong>
-                    <small>{action.detail}</small>
+                    <strong>No cleared actions yet today</strong>
+                    <small>Approved tasks will appear here with reviewer, timestamp, and evidence links.</small>
                   </span>
-                  <span className="rank-value">{action.approvalGate}</span>
                 </div>
               ))}
           </div>
@@ -921,6 +932,9 @@ function ClientHub({
 }: ClientHubProps) {
   const [addedGoals, setAddedGoals] = useState<Record<string, Goal[]>>({});
   const [addedAccounts, setAddedAccounts] = useState<Record<string, Account[]>>({});
+  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [accountFormOpen, setAccountFormOpen] = useState(false);
+  const [uploadState, setUploadState] = useState<string | null>(null);
   const clientRequests = requestedDocuments.filter((item) => item.startsWith(selectedClient.household));
   const displayedGoals = [...selectedClient.goals, ...(addedGoals[selectedClient.id] ?? [])];
   const displayedAccounts = [...selectedClient.accounts, ...(addedAccounts[selectedClient.id] ?? [])];
@@ -946,6 +960,7 @@ function ClientHub({
       ...items,
       [selectedClient.id]: [goal, ...(items[selectedClient.id] ?? [])],
     }));
+    setGoalFormOpen(false);
   };
   const addAccount = () => {
     const account: Account = {
@@ -961,6 +976,7 @@ function ClientHub({
       ...items,
       [selectedClient.id]: [account, ...(items[selectedClient.id] ?? [])],
     }));
+    setAccountFormOpen(false);
   };
 
   return (
@@ -1035,7 +1051,15 @@ function ClientHub({
                   <Upload size={16} /> Request {document.type}
                 </button>
               ))}
+            <button
+              className="secondary-action"
+              onClick={() => setUploadState("New document staged for OCR and advisor review")}
+              type="button"
+            >
+              <Upload size={16} /> Upload document
+            </button>
           </div>
+          {uploadState && <div className="inline-form success-form">{uploadState}</div>}
           <div className="data-list">
             {(clientRequests.length ? clientRequests : [`${selectedClient.household}: No active document requests`]).map((request) => (
               <div className="data-row single" key={request}>
@@ -1054,9 +1078,27 @@ function ClientHub({
           <div className="section-toolbar">
             <SectionTitle icon={Landmark} title="Accounts" />
             <button className="secondary-action" onClick={addAccount} type="button">
-              <Plus size={16} /> Add held-away
+              <Plus size={16} /> Quick add
+            </button>
+            <button className="secondary-action" onClick={() => setAccountFormOpen((value) => !value)} type="button">
+              <FileText size={16} /> Form
             </button>
           </div>
+          {accountFormOpen && (
+            <div className="inline-form">
+              <label>
+                Account name
+                <input readOnly value="New held-away account" />
+              </label>
+              <label>
+                Custodian
+                <input readOnly value="Client reported" />
+              </label>
+              <button className="primary-action" onClick={addAccount} type="button">
+                <Save size={16} /> Add account
+              </button>
+            </div>
+          )}
           <div className="data-list">
             {displayedAccounts.map((account) => (
               <div className="data-row" key={account.id}>
@@ -1075,9 +1117,27 @@ function ClientHub({
           <div className="section-toolbar">
             <SectionTitle icon={Gauge} title="Goals" />
             <button className="secondary-action" onClick={addGoal} type="button">
-              <Target size={16} /> Add goal
+              <Target size={16} /> Quick add
+            </button>
+            <button className="secondary-action" onClick={() => setGoalFormOpen((value) => !value)} type="button">
+              <FileText size={16} /> Form
             </button>
           </div>
+          {goalFormOpen && (
+            <div className="inline-form">
+              <label>
+                Goal title
+                <input readOnly value="New advisor-defined planning milestone" />
+              </label>
+              <label>
+                Target date
+                <input readOnly value="Draft target" />
+              </label>
+              <button className="primary-action" onClick={addGoal} type="button">
+                <Save size={16} /> Add goal
+              </button>
+            </div>
+          )}
           <div className="data-list">
             {displayedGoals.map((goal) => (
               <div className="goal-row" key={goal.id}>
@@ -1739,6 +1799,12 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
             <small>
               Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
             </small>
+            {member.capacity > 85 && (
+              <div className="capacity-alert">
+                <AlertTriangle size={15} />
+                <span>Delegation review triggered</span>
+              </div>
+            )}
           </article>
         ))}
       </div>
@@ -1778,6 +1844,14 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <Guardrail label="Compliance partner" value="Reserve for regulated communication review" tone="good" />
           <Guardrail label="Junior advisor" value="Receive reasoning summaries before client calls" tone="info" />
           <Guardrail label="Succession" value="Capture decision rationale from senior advisors" tone="neutral" />
+        </div>
+        <div className="toolbar-row">
+          <button className="secondary-action" type="button">
+            <SlidersHorizontal size={16} /> Configure rules
+          </button>
+          <button className="secondary-action danger" type="button">
+            <X size={16} /> Remove selected member
+          </button>
         </div>
       </section>
 
