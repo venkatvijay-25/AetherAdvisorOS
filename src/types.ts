@@ -95,7 +95,7 @@ export type MeetingAction = {
   owner: string;
   due: string;
   risk: StatusTone;
-  status: "Pending" | "Approved" | "Rejected";
+  status: "Pending" | "Approved" | "Rejected" | "Revision requested";
   approvalGate: "Advisor" | "Compliance" | "Client";
 };
 
@@ -117,7 +117,7 @@ export type Agent = {
   specialty: string;
   status: "Active" | "Paused" | "Review";
   confidence: number;
-  autonomy: "Observe" | "Draft" | "Execute with approval";
+  autonomy: "Observe" | "Draft" | "Execute with approval" | "Blocked";
   currentTask: string;
   lastReasoning: string;
 };
@@ -129,7 +129,7 @@ export type ComplianceReview = {
   category: string;
   severity: StatusTone;
   evidence: string;
-  status: "Open" | "Approved" | "Escalated";
+  status: "Open" | "Approved" | "Escalated" | "Revision requested";
 };
 
 export type AuditEvent = {

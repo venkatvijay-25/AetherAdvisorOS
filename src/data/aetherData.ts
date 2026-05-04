@@ -687,7 +687,7 @@ export const portfolioAssets: PortfolioAsset[] = [
     id: "pa6",
     name: "Cash and reserves",
     type: "Liquidity",
-    value: 6600000,
+    value: 6800000,
     weight: 6,
     risk: "info",
     note: "Supports near-term tax and care needs",

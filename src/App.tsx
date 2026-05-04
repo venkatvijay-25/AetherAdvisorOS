@@ -4,9 +4,11 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  BarChart3,
   Bot,
   BriefcaseBusiness,
   CalendarDays,
+  CalendarPlus,
   Check,
   ChevronRight,
   CircleDollarSign,
@@ -21,11 +23,15 @@ import {
   MessageSquareText,
   Network,
   Pause,
+  Plus,
   Play,
+  Save,
   Search,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
+  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -44,6 +50,7 @@ import type {
   AuditEvent,
   Client,
   ComplianceReview,
+  Meeting,
   MeetingAction,
   NavItem,
   Role,
@@ -87,15 +94,42 @@ const formatFullMoney = (value: number) =>
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
 
+type SearchResult = {
+  id: string;
+  label: string;
+  detail: string;
+  tone: StatusTone;
+  view: ViewKey;
+  clientId?: string;
+};
+
+const roleCopy: Record<Role, { title: string; detail: string }> = {
+  Advisor: {
+    title: "Advisor operating mode",
+    detail: "Shows client work, AI drafts, approvals, and internal planning context.",
+  },
+  Compliance: {
+    title: "Compliance supervision mode",
+    detail: "Prioritizes review queues, evidence, audit events, and supervision controls.",
+  },
+  Client: {
+    title: "Client-safe mode",
+    detail: "Hides internal AI reasoning, compliance notes, and staff workload details.",
+  },
+};
+
 function App() {
   const [activeView, setActiveView] = useState<ViewKey>("dashboard");
   const [role, setRole] = useState<Role>("Advisor");
   const [query, setQuery] = useState("");
   const [selectedClientId, setSelectedClientId] = useState(clients[0].id);
+  const [selectedMeetingId, setSelectedMeetingId] = useState(meetings[0].id);
   const [actions, setActions] = useState<MeetingAction[]>(initialMeetingActions);
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
   const [reviews, setReviews] = useState<ComplianceReview[]>(initialComplianceReviews);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>(initialAuditEvents);
+  const [requestedDocuments, setRequestedDocuments] = useState<string[]>([]);
+  const [agentInstructions, setAgentInstructions] = useState<Record<string, string>>({});
 
   const selectedClient = clients.find((client) => client.id === selectedClientId) ?? clients[0];
   const openReviews = reviews.filter((review) => review.status === "Open");
@@ -103,6 +137,19 @@ function App() {
   const agentHealth = Math.round(
     sum(agents.map((agent) => agent.confidence)) / Math.max(agents.length, 1),
   );
+  const visibleNavItems = useMemo(() => {
+    if (role === "Client") {
+      return navItems.filter((item) =>
+        ["dashboard", "clients", "meeting", "portfolio"].includes(item.key),
+      );
+    }
+
+    if (role === "Compliance") {
+      return navItems.filter((item) => item.key !== "team");
+    }
+
+    return navItems;
+  }, [role]);
 
   const filteredClients = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -114,6 +161,91 @@ function App() {
         .includes(normalized),
     );
   }, [query]);
+
+  const searchResults = useMemo<SearchResult[]>(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return [];
+
+    const resultSet: SearchResult[] = [];
+
+    clients.forEach((client) => {
+      const searchable = [
+        client.name,
+        client.household,
+        client.segment,
+        client.primaryGoal,
+        ...client.lifeEvents,
+        ...client.documents.map((document) => document.title),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (searchable.includes(normalized)) {
+        resultSet.push({
+          id: `client-${client.id}`,
+          label: client.household,
+          detail: `${client.segment} - ${client.primaryGoal}`,
+          tone: client.retentionRisk,
+          view: "clients",
+          clientId: client.id,
+        });
+      }
+    });
+
+    meetings.forEach((meeting) => {
+      const client = clients.find((item) => item.id === meeting.clientId);
+      if ([meeting.title, meeting.summary, ...(meeting.transcript ?? [])].join(" ").toLowerCase().includes(normalized)) {
+        resultSet.push({
+          id: `meeting-${meeting.id}`,
+          label: meeting.title,
+          detail: client?.household ?? "Meeting",
+          tone: meeting.sentiment,
+          view: "meeting",
+          clientId: meeting.clientId,
+        });
+      }
+    });
+
+    agents.forEach((agent) => {
+      if ([agent.name, agent.specialty, agent.currentTask, agent.lastReasoning].join(" ").toLowerCase().includes(normalized)) {
+        resultSet.push({
+          id: `agent-${agent.id}`,
+          label: agent.name,
+          detail: `${agent.status} - ${agent.currentTask}`,
+          tone: agent.status === "Active" ? "good" : agent.status === "Paused" ? "neutral" : "warn",
+          view: "agents",
+        });
+      }
+    });
+
+    reviews.forEach((review) => {
+      const client = clients.find((item) => item.id === review.clientId);
+      if ([review.title, review.category, review.evidence, client?.household].join(" ").toLowerCase().includes(normalized)) {
+        resultSet.push({
+          id: `review-${review.id}`,
+          label: review.title,
+          detail: `${review.category} - ${review.status}`,
+          tone: review.severity,
+          view: "compliance",
+          clientId: review.clientId,
+        });
+      }
+    });
+
+    auditEvents.forEach((event) => {
+      if ([event.title, event.actor, event.detail, event.category].join(" ").toLowerCase().includes(normalized)) {
+        resultSet.push({
+          id: `audit-${event.id}`,
+          label: event.title,
+          detail: `${event.actor} - ${event.detail}`,
+          tone: event.category === "Compliance" ? "warn" : "info",
+          view: "compliance",
+        });
+      }
+    });
+
+    return resultSet.slice(0, 8);
+  }, [agents, auditEvents, query, reviews]);
 
   const addAudit = (
     category: AuditEvent["category"],
@@ -169,6 +301,21 @@ function App() {
     );
   };
 
+  const requestRevision = (id: string) => {
+    const action = actions.find((item) => item.id === id);
+    if (!action) return;
+
+    setActions((items) =>
+      items.map((item) => (item.id === id ? { ...item, status: "Revision requested" } : item)),
+    );
+    addAudit(
+      "Compliance",
+      role,
+      `Revision requested: ${action.title}`,
+      "Returned to the advisor workspace with comments before any client delivery.",
+    );
+  };
+
   const updateReview = (id: string, status: ComplianceReview["status"]) => {
     const review = reviews.find((item) => item.id === id);
     if (!review) return;
@@ -193,6 +340,43 @@ function App() {
     );
   };
 
+  const updateAgentAutonomy = (id: string, autonomy: Agent["autonomy"]) => {
+    const agent = agents.find((item) => item.id === id);
+    if (!agent) return;
+
+    setAgents((items) => items.map((item) => (item.id === id ? { ...item, autonomy } : item)));
+    addAudit("System", "Agent Control", `Autonomy updated: ${agent.name}`, `New mode: ${autonomy}.`);
+  };
+
+  const saveAgentInstruction = (id: string, instruction: string) => {
+    const agent = agents.find((item) => item.id === id);
+    if (!agent || !instruction.trim()) return;
+
+    setAgentInstructions((items) => ({ ...items, [id]: instruction.trim() }));
+    addAudit(
+      "Human",
+      role,
+      `Instruction saved: ${agent.name}`,
+      instruction.trim(),
+    );
+  };
+
+  const requestDocument = (title: string) => {
+    const request = `${selectedClient.household}: ${title}`;
+    setRequestedDocuments((items) => (items.includes(request) ? items : [request, ...items]));
+    addAudit("Human", role, `Document requested: ${title}`, `${selectedClient.household} request added to follow-up queue.`);
+  };
+
+  const selectRole = (nextRole: Role) => {
+    setRole(nextRole);
+    if (nextRole === "Client" && !["dashboard", "clients", "meeting", "portfolio"].includes(activeView)) {
+      setActiveView("clients");
+    }
+    if (nextRole === "Compliance" && activeView === "team") {
+      setActiveView("compliance");
+    }
+  };
+
   const renderView = () => {
     switch (activeView) {
       case "dashboard":
@@ -203,15 +387,20 @@ function App() {
             clients={filteredClients}
             openReviews={openReviews}
             pendingActions={pendingActions}
+            role={role}
             selectedClient={selectedClient}
             setActiveView={setActiveView}
             setSelectedClientId={setSelectedClientId}
+            setSelectedMeetingId={setSelectedMeetingId}
           />
         );
       case "clients":
         return (
           <ClientHub
             clients={filteredClients}
+            requestedDocuments={requestedDocuments}
+            requestDocument={requestDocument}
+            role={role}
             selectedClient={selectedClient}
             setSelectedClientId={setSelectedClientId}
             setActiveView={setActiveView}
@@ -222,12 +411,26 @@ function App() {
           <MeetingAssistant
             actions={actions}
             approveAction={approveAction}
+            meetings={meetings}
             rejectAction={rejectAction}
+            requestRevision={requestRevision}
+            selectedMeetingId={selectedMeetingId}
             selectedClient={selectedClient}
+            setSelectedClientId={setSelectedClientId}
+            setSelectedMeetingId={setSelectedMeetingId}
           />
         );
       case "agents":
-        return <AgentSwarm agents={agents} toggleAgent={toggleAgent} />;
+        return (
+          <AgentSwarm
+            agentInstructions={agentInstructions}
+            agents={agents}
+            auditEvents={auditEvents}
+            saveAgentInstruction={saveAgentInstruction}
+            toggleAgent={toggleAgent}
+            updateAgentAutonomy={updateAgentAutonomy}
+          />
+        );
       case "compliance":
         return (
           <ComplianceShield
@@ -239,9 +442,9 @@ function App() {
       case "portfolio":
         return <PortfolioManager selectedClient={selectedClient} />;
       case "team":
-        return <TeamOs />;
+        return <TeamOs actions={actions} />;
       case "settings":
-        return <SettingsView />;
+        return <SettingsView addAudit={addAudit} />;
       default:
         return null;
     }
@@ -261,7 +464,7 @@ function App() {
         </div>
 
         <nav className="nav-list" aria-label="Primary">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -289,19 +492,52 @@ function App() {
             <ChevronRight size={16} />
           </button>
           <StatusPill tone={selectedClient.retentionRisk} label="Retention" />
+          <small className="sidebar-help">
+            {toneLabel[selectedClient.retentionRisk]} retention signal from meetings, document gaps, and next-gen sentiment.
+          </small>
         </div>
       </aside>
 
       <main className="main-area">
         <header className="topbar">
-          <div className="search-shell">
-            <Search size={18} />
-            <input
-              aria-label="Search clients and work"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search clients, assets, agents, compliance"
-              value={query}
-            />
+          <div className="search-wrapper">
+            <div className="search-shell">
+              <Search size={18} />
+              <input
+                aria-label="Search clients and work"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search clients, assets, agents, compliance"
+                value={query}
+              />
+            </div>
+            {query.trim() && (
+              <div className="search-results">
+                {searchResults.length ? (
+                  searchResults.map((result) => (
+                    <button
+                      className="search-result"
+                      key={result.id}
+                      onClick={() => {
+                        if (result.clientId) setSelectedClientId(result.clientId);
+                        const meeting = meetings.find((item) => item.clientId === result.clientId);
+                        if (result.view === "meeting" && meeting) setSelectedMeetingId(meeting.id);
+                        setActiveView(result.view);
+                        setQuery("");
+                      }}
+                      type="button"
+                    >
+                      <RiskDot tone={result.tone} />
+                      <span>
+                        <strong>{result.label}</strong>
+                        <small>{result.detail}</small>
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="empty-state">No matching clients, work, agents, or audit events.</div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="topbar-actions">
@@ -310,27 +546,31 @@ function App() {
                 <button
                   className={clsx(role === item && "active")}
                   key={item}
-                  onClick={() => setRole(item)}
+                  onClick={() => selectRole(item)}
                   type="button"
                 >
                   {item}
                 </button>
               ))}
             </div>
-            <div className="agent-health">
+            <button className="agent-health" onClick={() => setActiveView("agents")} type="button">
               <Activity size={17} />
               <span>{agentHealth}% agent health</span>
-            </div>
+            </button>
           </div>
         </header>
 
         <div className="content-grid">
-          <section className="workspace">{renderView()}</section>
+          <section className="workspace">
+            <RoleModeBanner role={role} />
+            {renderView()}
+          </section>
           <IntelligencePanel
             activeView={activeView}
             auditEvents={auditEvents}
             openReviews={openReviews}
             pendingActions={pendingActions}
+            role={role}
             selectedClient={selectedClient}
             setActiveView={setActiveView}
           />
@@ -346,9 +586,11 @@ type DashboardProps = {
   clients: Client[];
   openReviews: ComplianceReview[];
   pendingActions: MeetingAction[];
+  role: Role;
   selectedClient: Client;
   setActiveView: (view: ViewKey) => void;
   setSelectedClientId: (id: string) => void;
+  setSelectedMeetingId: (id: string) => void;
 };
 
 function Dashboard({
@@ -357,9 +599,11 @@ function Dashboard({
   clients: visibleClients,
   openReviews,
   pendingActions,
+  role,
   selectedClient,
   setActiveView,
   setSelectedClientId,
+  setSelectedMeetingId,
 }: DashboardProps) {
   const totalAum = sum(clients.map((client) => client.aum));
   const criticalHouseholds = clients.filter((client) => client.retentionRisk !== "good").length;
@@ -368,16 +612,22 @@ function Dashboard({
   return (
     <div className="view-stack">
       <ViewHeader
-        eyebrow="Advisor Command"
-        title="Today"
-        subtitle="Priority meetings, approval gates, household risk, and audit posture."
+        eyebrow={role === "Compliance" ? "Supervision Command" : role === "Client" ? "Client Portal" : "Advisor Command"}
+        title={role === "Compliance" ? "Review Today" : "Today"}
+        subtitle={
+          role === "Compliance"
+            ? "Open reviews, audit exceptions, escalations, and evidence packages."
+            : role === "Client"
+              ? "Shared plan progress, upcoming meetings, and portfolio context."
+              : "Priority meetings, approval gates, household risk, and audit posture."
+        }
       />
 
       <div className="metric-grid">
-        <MetricTile icon={CircleDollarSign} label="AUM covered" value={formatMoney(totalAum)} />
-        <MetricTile icon={AlertTriangle} label="At-risk households" tone="warn" value={`${criticalHouseholds}`} />
-        <MetricTile icon={ClipboardCheck} label="Pending approvals" tone="info" value={`${pendingActions.length}`} />
-        <MetricTile icon={ShieldCheck} label="Cleared today" tone="good" value={`${approvedToday}`} />
+        <MetricTile icon={CircleDollarSign} label="AUM covered" onClick={() => setActiveView("portfolio")} value={formatMoney(totalAum)} />
+        <MetricTile icon={AlertTriangle} label="At-risk households" onClick={() => setActiveView("clients")} tone="warn" value={`${criticalHouseholds}`} />
+        <MetricTile icon={ClipboardCheck} label="Pending approvals" onClick={() => setActiveView("meeting")} tone="info" value={`${pendingActions.length}`} />
+        <MetricTile icon={ShieldCheck} label={role === "Compliance" ? "Open reviews" : "Cleared today"} onClick={() => setActiveView("compliance")} tone={role === "Compliance" ? "danger" : "good"} value={`${role === "Compliance" ? openReviews.length : approvedToday}`} />
       </div>
 
       <div className="two-column">
@@ -392,6 +642,7 @@ function Dashboard({
                   key={meeting.id}
                   onClick={() => {
                     setSelectedClientId(client.id);
+                    setSelectedMeetingId(meeting.id);
                     setActiveView("meeting");
                   }}
                   type="button"
@@ -474,12 +725,25 @@ function Dashboard({
 
 type ClientHubProps = {
   clients: Client[];
+  requestedDocuments: string[];
+  requestDocument: (title: string) => void;
+  role: Role;
   selectedClient: Client;
   setActiveView: (view: ViewKey) => void;
   setSelectedClientId: (id: string) => void;
 };
 
-function ClientHub({ clients: visibleClients, selectedClient, setActiveView, setSelectedClientId }: ClientHubProps) {
+function ClientHub({
+  clients: visibleClients,
+  requestedDocuments,
+  requestDocument,
+  role,
+  selectedClient,
+  setActiveView,
+  setSelectedClientId,
+}: ClientHubProps) {
+  const clientRequests = requestedDocuments.filter((item) => item.startsWith(selectedClient.household));
+
   return (
     <div className="view-stack">
       <ViewHeader
@@ -510,15 +774,56 @@ function ClientHub({ clients: visibleClients, selectedClient, setActiveView, set
 
         <section className="surface">
           <SectionTitle icon={Network} title="Family Map" />
-          <div className="family-map">
-            {selectedClient.family.map((member) => (
-              <div className={clsx("family-node", member.relation === "Primary" && "primary")} key={member.id}>
+          <div className="family-tree">
+            {selectedClient.family.map((member, index) => (
+              <div className={clsx("family-node", member.relation === "Primary" && "primary")} key={member.id} style={{ gridColumn: member.relation === "Primary" ? "1 / -1" : undefined }}>
                 <div>
                   <strong>{member.name}</strong>
                   <small>{member.relation} - {member.age}</small>
                 </div>
                 <StatusPill tone={member.sentiment} label={member.influence} />
                 <span>{member.priority}</span>
+                {index > 0 && <small>Connected through family council and estate documents</small>}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="two-column">
+        <section className="surface">
+          <SectionTitle icon={CalendarPlus} title="Life Event Timeline" />
+          <div className="event-timeline">
+            {selectedClient.lifeEvents.map((event, index) => (
+              <div className="event-row" key={event}>
+                <span className="event-index">{index + 1}</span>
+                <span>
+                  <strong>{event}</strong>
+                  <small>{index === 0 ? "Trigger: create planning task today" : "Monitor and refresh assumptions"}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="surface">
+          <SectionTitle icon={Upload} title="Document Requests" />
+          <div className="request-actions">
+            {selectedClient.documents
+              .filter((document) => document.status !== "good")
+              .map((document) => (
+                <button className="secondary-action" key={document.id} onClick={() => requestDocument(document.title)} type="button">
+                  <Upload size={16} /> Request {document.type}
+                </button>
+              ))}
+          </div>
+          <div className="data-list">
+            {(clientRequests.length ? clientRequests : [`${selectedClient.household}: No active document requests`]).map((request) => (
+              <div className="data-row single" key={request}>
+                <span>
+                  <strong>{request.replace(`${selectedClient.household}: `, "")}</strong>
+                  <small>{clientRequests.length ? "Request queued for client follow-up" : "All current document needs are visible below"}</small>
+                </span>
               </div>
             ))}
           </div>
@@ -577,22 +882,33 @@ function ClientHub({ clients: visibleClients, selectedClient, setActiveView, set
       </div>
 
       <section className="surface">
-        <SectionTitle icon={Sparkles} title="Advisor Recommendations" />
+        <SectionTitle icon={Sparkles} title={role === "Client" ? "Shared Plan Actions" : "Advisor Recommendations"} />
         <div className="recommendation-grid">
           {selectedClient.recommendations.map((recommendation) => (
             <article className="recommendation" key={recommendation.id}>
               <div className="recommendation-top">
                 <strong>{recommendation.title}</strong>
-                <StatusPill tone={recommendation.conflictCheck} label={recommendation.gate} />
+                <StatusPill tone={recommendation.conflictCheck} label={role === "Client" ? "Advisor reviewed" : recommendation.gate} />
               </div>
-              <p>{recommendation.rationale}</p>
+              <p>
+                {role === "Client"
+                  ? "Your advisor is reviewing this planning action before it becomes part of your shared plan."
+                  : recommendation.rationale}
+              </p>
               <ProgressBar value={recommendation.confidence} tone={recommendation.conflictCheck} />
             </article>
           ))}
         </div>
-        <button className="primary-action" onClick={() => setActiveView("meeting")} type="button">
-          <MessageSquareText size={16} /> Open next meeting
-        </button>
+        <div className="toolbar-row">
+          <button className="primary-action" onClick={() => setActiveView("meeting")} type="button">
+            <MessageSquareText size={16} /> Open next meeting
+          </button>
+          {role !== "Client" && (
+            <button className="secondary-action" onClick={() => requestDocument("New planning goal intake")} type="button">
+              <Plus size={16} /> Add goal intake
+            </button>
+          )}
+        </div>
       </section>
     </div>
   );
@@ -601,13 +917,37 @@ function ClientHub({ clients: visibleClients, selectedClient, setActiveView, set
 type MeetingAssistantProps = {
   actions: MeetingAction[];
   approveAction: (id: string) => void;
+  meetings: Meeting[];
   rejectAction: (id: string) => void;
+  requestRevision: (id: string) => void;
+  selectedMeetingId: string;
   selectedClient: Client;
+  setSelectedClientId: (id: string) => void;
+  setSelectedMeetingId: (id: string) => void;
 };
 
-function MeetingAssistant({ actions, approveAction, rejectAction, selectedClient }: MeetingAssistantProps) {
-  const meeting = meetings.find((item) => item.clientId === selectedClient.id) ?? meetings[0];
+function MeetingAssistant({
+  actions,
+  approveAction,
+  meetings: meetingList,
+  rejectAction,
+  requestRevision,
+  selectedMeetingId,
+  selectedClient,
+  setSelectedClientId,
+  setSelectedMeetingId,
+}: MeetingAssistantProps) {
+  const [meetingStage, setMeetingStage] = useState<"Prep" | "Live" | "Follow-up">("Prep");
+  const [transcriptDraft, setTranscriptDraft] = useState("");
+  const [recapVisible, setRecapVisible] = useState(true);
+  const meeting =
+    meetingList.find((item) => item.id === selectedMeetingId) ??
+    meetingList.find((item) => item.clientId === selectedClient.id) ??
+    meetingList[0];
   const clientActions = actions.filter((action) => action.clientId === selectedClient.id);
+  const transcriptLines = transcriptDraft.trim()
+    ? [...meeting.transcript, ...transcriptDraft.split("\n").filter(Boolean)]
+    : meeting.transcript;
 
   return (
     <div className="view-stack">
@@ -617,11 +957,48 @@ function MeetingAssistant({ actions, approveAction, rejectAction, selectedClient
         subtitle={`${selectedClient.household} - ${meeting.time} - ${meeting.duration}`}
       />
 
+      <section className="surface">
+        <SectionTitle icon={CalendarDays} title="Calendar and Meeting History" />
+        <div className="meeting-switcher">
+          {meetingList.map((item) => {
+            const client = clients.find((entry) => entry.id === item.clientId);
+            return (
+              <button
+                className={clsx("meeting-card", item.id === meeting.id && "active")}
+                key={item.id}
+                onClick={() => {
+                  setSelectedMeetingId(item.id);
+                  setSelectedClientId(item.clientId);
+                }}
+                type="button"
+              >
+                <span className="timeline-time">{item.time}</span>
+                <strong>{item.title}</strong>
+                <small>{client?.household} - {item.duration}</small>
+                <StatusPill tone={item.sentiment} label={item.stage} />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="two-column">
         <section className="surface">
           <SectionTitle icon={Clock3} title="Meeting Brief" />
+          <div className="segmented local-tabs">
+            {(["Prep", "Live", "Follow-up"] as const).map((stage) => (
+              <button
+                className={clsx(meetingStage === stage && "active")}
+                key={stage}
+                onClick={() => setMeetingStage(stage)}
+                type="button"
+              >
+                {stage}
+              </button>
+            ))}
+          </div>
           <div className="brief-grid">
-            <BriefItem label="Stage" value={meeting.stage} tone={meeting.sentiment} />
+            <BriefItem label="Stage" value={meetingStage} tone={meeting.sentiment} />
             <BriefItem label="Client objective" value={selectedClient.primaryGoal} tone="info" />
             <BriefItem label="Risk score" value={`${selectedClient.riskScore}/100`} tone={selectedClient.retentionRisk} />
             <BriefItem label="Next event" value={selectedClient.lifeEvents[0]} tone="warn" />
@@ -632,10 +1009,16 @@ function MeetingAssistant({ actions, approveAction, rejectAction, selectedClient
         <section className="surface">
           <SectionTitle icon={FileText} title="Transcript Signals" />
           <div className="quote-list">
-            {meeting.transcript.map((line) => (
+            {transcriptLines.map((line) => (
               <blockquote key={line}>{line}</blockquote>
             ))}
           </div>
+          <textarea
+            className="transcript-input"
+            onChange={(event) => setTranscriptDraft(event.target.value)}
+            placeholder="Paste transcript notes or meeting audio summary here"
+            value={transcriptDraft}
+          />
         </section>
       </div>
 
@@ -661,13 +1044,38 @@ function MeetingAssistant({ actions, approveAction, rejectAction, selectedClient
                     <button className="icon-button reject" onClick={() => rejectAction(action.id)} title="Reject" type="button">
                       <X size={17} />
                     </button>
+                    <button className="icon-button" onClick={() => requestRevision(action.id)} title="Request revision" type="button">
+                      <ArrowRight size={17} />
+                    </button>
                   </>
                 ) : (
-                  <StatusPill tone={action.status === "Approved" ? "good" : "danger"} label={action.status} />
+                  <StatusPill tone={action.status === "Approved" ? "good" : action.status === "Rejected" ? "danger" : "warn"} label={action.status} />
                 )}
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="surface">
+        <SectionTitle icon={MessageSquareText} title="Post-Meeting Recap" />
+        <div className="recap-shell">
+          <div>
+            <strong>{selectedClient.name} follow-up draft</strong>
+            <p>
+              Thank you for the conversation. We will confirm the open assumptions, route regulated language for review, and return with an advisor-approved action plan.
+            </p>
+            {recapVisible && (
+              <div className="recap-steps">
+                <Guardrail label="Client-ready summary" value="Advisor approval required before send" tone="info" />
+                <Guardrail label="Open source items" value={`${transcriptLines.length} transcript signals attached`} tone="good" />
+                <Guardrail label="Follow-up tasks" value={`${clientActions.length} action drafts generated`} tone="warn" />
+              </div>
+            )}
+          </div>
+          <button className="primary-action" onClick={() => setRecapVisible((value) => !value)} type="button">
+            <Save size={16} /> {recapVisible ? "Hide recap detail" : "Generate recap"}
+          </button>
         </div>
       </section>
     </div>
@@ -675,11 +1083,24 @@ function MeetingAssistant({ actions, approveAction, rejectAction, selectedClient
 }
 
 type AgentSwarmProps = {
+  agentInstructions: Record<string, string>;
   agents: Agent[];
+  auditEvents: AuditEvent[];
+  saveAgentInstruction: (id: string, instruction: string) => void;
   toggleAgent: (id: string) => void;
+  updateAgentAutonomy: (id: string, autonomy: Agent["autonomy"]) => void;
 };
 
-function AgentSwarm({ agents, toggleAgent }: AgentSwarmProps) {
+function AgentSwarm({
+  agentInstructions,
+  agents,
+  auditEvents,
+  saveAgentInstruction,
+  toggleAgent,
+  updateAgentAutonomy,
+}: AgentSwarmProps) {
+  const [draftInstructions, setDraftInstructions] = useState<Record<string, string>>({});
+
   return (
     <div className="view-stack">
       <ViewHeader
@@ -697,23 +1118,49 @@ function AgentSwarm({ agents, toggleAgent }: AgentSwarmProps) {
                 <small>{agent.specialty}</small>
               </div>
               <button
-                className="icon-button"
+                className={clsx("agent-toggle", agent.status === "Paused" && "paused")}
                 onClick={() => toggleAgent(agent.id)}
                 title={agent.status === "Paused" ? "Resume agent" : "Pause agent"}
                 type="button"
               >
                 {agent.status === "Paused" ? <Play size={17} /> : <Pause size={17} />}
+                <span>{agent.status === "Paused" ? "Resume" : "Pause"}</span>
               </button>
             </div>
             <div className="agent-meta">
               <StatusPill tone={agent.status === "Active" ? "good" : agent.status === "Paused" ? "neutral" : "warn"} label={agent.status} />
-              <StatusPill tone="info" label={agent.autonomy} />
+              <select
+                className="select-control"
+                onChange={(event) => updateAgentAutonomy(agent.id, event.target.value as Agent["autonomy"])}
+                value={agent.autonomy}
+              >
+                <option>Observe</option>
+                <option>Draft</option>
+                <option>Execute with approval</option>
+                <option>Blocked</option>
+              </select>
             </div>
             <ProgressBar value={agent.confidence} tone={agent.confidence > 85 ? "good" : "warn"} />
             <p>{agent.currentTask}</p>
             <div className="reasoning-box">
               <span>Reasoning</span>
               <small>{agent.lastReasoning}</small>
+            </div>
+            <div className="instruction-box">
+              <input
+                onChange={(event) =>
+                  setDraftInstructions((items) => ({ ...items, [agent.id]: event.target.value }))
+                }
+                placeholder="Add household-specific instruction"
+                value={draftInstructions[agent.id] ?? agentInstructions[agent.id] ?? ""}
+              />
+              <button
+                className="secondary-action"
+                onClick={() => saveAgentInstruction(agent.id, draftInstructions[agent.id] ?? agentInstructions[agent.id] ?? "")}
+                type="button"
+              >
+                <Save size={16} /> Save
+              </button>
             </div>
           </article>
         ))}
@@ -728,6 +1175,13 @@ function AgentSwarm({ agents, toggleAgent }: AgentSwarmProps) {
           <Guardrail label="Blocked" value="Cannot trade, send, or alter records without controls" tone="danger" />
         </div>
       </section>
+
+      <section className="surface">
+        <SectionTitle icon={Activity} title="Agent Activity Log" />
+        <AuditList
+          events={auditEvents.filter((event) => event.category === "AI" || event.actor.includes("Agent")).slice(0, 6)}
+        />
+      </section>
     </div>
   );
 }
@@ -739,6 +1193,10 @@ type ComplianceShieldProps = {
 };
 
 function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShieldProps) {
+  const [auditFilter, setAuditFilter] = useState("All");
+  const filteredEvents =
+    auditFilter === "All" ? auditEvents : auditEvents.filter((event) => event.category === auditFilter);
+
   return (
     <div className="view-stack">
       <ViewHeader
@@ -770,6 +1228,14 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
                   <Check size={16} /> Approve
                 </button>
                 <button
+                  className="secondary-action"
+                  disabled={review.status !== "Open"}
+                  onClick={() => updateReview(review.id, "Revision requested")}
+                  type="button"
+                >
+                  <ArrowRight size={16} /> Request revision
+                </button>
+                <button
                   className="secondary-action danger"
                   disabled={review.status !== "Open"}
                   onClick={() => updateReview(review.id, "Escalated")}
@@ -784,8 +1250,32 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
       </div>
 
       <section className="surface">
-        <SectionTitle icon={FileCheck2} title="Immutable Audit Timeline" />
-        <AuditList events={auditEvents} />
+        <div className="section-toolbar">
+          <SectionTitle icon={FileCheck2} title="Immutable Audit Timeline" />
+          <div className="segmented local-tabs">
+            {["All", "AI", "Human", "Compliance", "System"].map((item) => (
+              <button
+                className={clsx(auditFilter === item && "active")}
+                key={item}
+                onClick={() => setAuditFilter(item)}
+                type="button"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+        <AuditList events={filteredEvents} />
+      </section>
+
+      <section className="surface">
+        <SectionTitle icon={Clock3} title="Escalation Routing" />
+        <div className="guardrail-grid">
+          <Guardrail label="Critical" value="Compliance partner within 2 business hours" tone="danger" />
+          <Guardrail label="Watch" value="Advisor revision within same day" tone="warn" />
+          <Guardrail label="Info" value="Archive with disclosure evidence" tone="info" />
+          <Guardrail label="Approved" value="Release to advisor-controlled send queue" tone="good" />
+        </div>
       </section>
 
       <section className="surface">
@@ -803,6 +1293,10 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
 
 function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
   const totalPortfolio = sum(portfolioAssets.map((asset) => asset.value));
+  const [salePercent, setSalePercent] = useState(12);
+  const [liquidityMonths, setLiquidityMonths] = useState(18);
+  const [period, setPeriod] = useState("YTD");
+  const projectedTaxSavings = Math.round(salePercent * 150000);
 
   return (
     <div className="view-stack">
@@ -820,7 +1314,37 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
       </div>
 
       <section className="surface">
-        <SectionTitle icon={Landmark} title="Enterprise Exposure" />
+        <SectionTitle icon={BarChart3} title="Allocation Overview" />
+        <div className="allocation-bar">
+          {portfolioAssets.map((asset) => (
+            <span
+              className={clsx("allocation-segment", `tone-${asset.risk}`)}
+              key={asset.id}
+              style={{ width: `${asset.weight}%` }}
+              title={`${asset.name}: ${asset.weight}%`}
+            />
+          ))}
+        </div>
+        <div className="allocation-legend">
+          {portfolioAssets.map((asset) => (
+            <span key={asset.id}>
+              <RiskDot tone={asset.risk} /> {asset.name} {asset.weight}%
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="surface">
+        <div className="section-toolbar">
+          <SectionTitle icon={Landmark} title="Enterprise Exposure" />
+          <div className="segmented local-tabs">
+            {["YTD", "1Y", "3Y"].map((item) => (
+              <button className={clsx(period === item && "active")} key={item} onClick={() => setPeriod(item)} type="button">
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="asset-table">
           {portfolioAssets.map((asset) => (
             <div className="asset-row" key={asset.id}>
@@ -831,7 +1355,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
               <span className="numeric">{formatFullMoney(asset.value)}</span>
               <div className="bar-cell">
                 <ProgressBar value={asset.weight} tone={asset.risk} />
-                <small>{asset.weight}%</small>
+                <small>{asset.weight}% allocation - {period} return view</small>
               </div>
               <StatusPill tone={asset.risk} label={toneLabel[asset.risk]} />
             </div>
@@ -840,15 +1364,51 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
       </section>
 
       <div className="three-column">
-        <ScenarioCard title="Tax-aware sale" value="+$1.8M" detail="Harvests charitable lots and stages sale windows." tone="good" />
-        <ScenarioCard title="Liquidity stress" value="14 mo" detail="Private call plus care reserve remains funded." tone="warn" />
+        <ScenarioCard title="Tax-aware sale" value={formatFullMoney(projectedTaxSavings)} detail={`${salePercent}% staged sale with charitable lot harvesting.`} tone="good" />
+        <ScenarioCard title="Liquidity stress" value={`${liquidityMonths - 4} mo`} detail="Private call plus care reserve remains funded." tone="warn" />
         <ScenarioCard title="Held-away cleanup" value="$3.9M" detail="Insurance policy requires beneficiary and fee review." tone="danger" />
       </div>
+
+      <section className="surface">
+        <SectionTitle icon={SlidersHorizontal} title="Scenario Model Inputs" />
+        <div className="slider-grid">
+          <label>
+            Founder stock sale
+            <input max="30" min="0" onChange={(event) => setSalePercent(Number(event.target.value))} type="range" value={salePercent} />
+            <strong>{salePercent}%</strong>
+          </label>
+          <label>
+            Target liquidity runway
+            <input max="30" min="6" onChange={(event) => setLiquidityMonths(Number(event.target.value))} type="range" value={liquidityMonths} />
+            <strong>{liquidityMonths} months</strong>
+          </label>
+        </div>
+      </section>
+
+      <section className="surface">
+        <SectionTitle icon={FileCheck2} title="IPS Exceptions" />
+        <div className="data-list">
+          <div className="data-row single">
+            <span>
+              <strong>Single issuer exposure exceeds target range</strong>
+              <small>Chen founder stock is 20% of enterprise exposure; IPS target is below 15% unless a sale plan is active.</small>
+            </span>
+            <StatusPill tone="warn" label="Open" />
+          </div>
+          <div className="data-row single">
+            <span>
+              <strong>Held-away insurance metadata incomplete</strong>
+              <small>Walker annuity lacks beneficiary, fee, and surrender-window evidence.</small>
+            </span>
+            <StatusPill tone="danger" label="Open" />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-function TeamOs() {
+function TeamOs({ actions }: { actions: MeetingAction[] }) {
   return (
     <div className="view-stack">
       <ViewHeader
@@ -869,9 +1429,29 @@ function TeamOs() {
             </div>
             <ProgressBar value={member.capacity} tone={member.risk} />
             <p>{member.focus}</p>
+            <small>
+              Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
+            </small>
           </article>
         ))}
       </div>
+
+      <section className="surface">
+        <SectionTitle icon={ClipboardCheck} title="Workload Board" />
+        <div className="asset-table">
+          {actions.map((action) => (
+            <div className="asset-row" key={action.id}>
+              <span>
+                <strong>{action.title}</strong>
+                <small>{clients.find((client) => client.id === action.clientId)?.household} - {action.detail}</small>
+              </span>
+              <span className="numeric">{action.owner}</span>
+              <StatusPill tone={action.risk} label={action.due} />
+              <StatusPill tone={action.status === "Approved" ? "good" : action.status === "Pending" ? "warn" : "neutral"} label={action.status} />
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="surface">
         <SectionTitle icon={BriefcaseBusiness} title="Delegation Rules" />
@@ -882,11 +1462,51 @@ function TeamOs() {
           <Guardrail label="Succession" value="Capture decision rationale from senior advisors" tone="neutral" />
         </div>
       </section>
+
+      <section className="surface">
+        <SectionTitle icon={FileText} title="Mentorship Capture" />
+        <div className="guardrail-grid">
+          <Guardrail label="Sarah Mitchell" value="Captured Chen liquidity rationale for junior advisor review" tone="good" />
+          <Guardrail label="David Rao" value="Recorded tax scenario assumptions and open questions" tone="info" />
+          <Guardrail label="Mina Patel" value="Needs delegation relief on follow-up drafting" tone="danger" />
+          <Guardrail label="Jon Bell" value="Compliance patterns ready for AI policy tuning" tone="good" />
+        </div>
+        <button className="secondary-action" type="button">
+          <Plus size={16} /> Add team member
+        </button>
+      </section>
     </div>
   );
 }
 
-function SettingsView() {
+function SettingsView({
+  addAudit,
+}: {
+  addAudit: (
+    category: AuditEvent["category"],
+    actor: string,
+    title: string,
+    detail: string,
+  ) => void;
+}) {
+  const [settings, setSettings] = useState({
+    externalApproval: true,
+    clientTrainingOptOut: true,
+    retentionYears: 7,
+    confidenceThreshold: 82,
+    defaultAutonomy: "Draft",
+    dataSource: "CRM + Custodian + Document Vault",
+  });
+
+  const saveSettings = () => {
+    addAudit(
+      "System",
+      "Governance Settings",
+      "Governance settings saved",
+      `AI threshold ${settings.confidenceThreshold}%, retention ${settings.retentionYears} years, default autonomy ${settings.defaultAutonomy}.`,
+    );
+  };
+
   return (
     <div className="view-stack">
       <ViewHeader
@@ -896,27 +1516,92 @@ function SettingsView() {
       />
 
       <div className="settings-grid">
-        <SettingsSection
-          icon={LockKeyhole}
-          title="Access Control"
-          items={["Advisor, compliance, client, and operations roles", "Household-level data partitions", "Step-up approval for sensitive documents"]}
-        />
-        <SettingsSection
-          icon={FileCheck2}
-          title="Records"
-          items={["Prompt and output archive", "Advisor approval receipts", "SEC/FINRA export package"]}
-        />
-        <SettingsSection
-          icon={Bot}
-          title="AI Policy"
-          items={["No client data used for model training", "Model version stamped on every output", "Human gate for external communication"]}
-        />
-        <SettingsSection
-          icon={Landmark}
-          title="Data Sources"
-          items={["Custodians", "CRM", "Planning tools", "Calendar and email", "Document vault"]}
-        />
+        <section className="surface settings-section">
+          <SectionTitle icon={LockKeyhole} title="Access Control" />
+          <ToggleRow
+            checked={settings.externalApproval}
+            label="Require approval before external delivery"
+            onChange={(checked) => setSettings((items) => ({ ...items, externalApproval: checked }))}
+          />
+          <label className="field-row">
+            Default AI autonomy
+            <select
+              className="select-control wide"
+              onChange={(event) => setSettings((items) => ({ ...items, defaultAutonomy: event.target.value }))}
+              value={settings.defaultAutonomy}
+            >
+              <option>Observe</option>
+              <option>Draft</option>
+              <option>Execute with approval</option>
+              <option>Blocked</option>
+            </select>
+          </label>
+        </section>
+
+        <section className="surface settings-section">
+          <SectionTitle icon={FileCheck2} title="Records" />
+          <label className="field-row">
+            Records retention
+            <input
+              max="10"
+              min="3"
+              onChange={(event) => setSettings((items) => ({ ...items, retentionYears: Number(event.target.value) }))}
+              type="number"
+              value={settings.retentionYears}
+            />
+          </label>
+          <ToggleRow
+            checked={settings.clientTrainingOptOut}
+            label="Exclude client data from model training"
+            onChange={(checked) => setSettings((items) => ({ ...items, clientTrainingOptOut: checked }))}
+          />
+        </section>
+
+        <section className="surface settings-section">
+          <SectionTitle icon={Bot} title="AI Policy" />
+          <label className="field-row">
+            Minimum confidence before advisor review
+            <input
+              max="99"
+              min="50"
+              onChange={(event) => setSettings((items) => ({ ...items, confidenceThreshold: Number(event.target.value) }))}
+              type="range"
+              value={settings.confidenceThreshold}
+            />
+            <strong>{settings.confidenceThreshold}%</strong>
+          </label>
+        </section>
+
+        <section className="surface settings-section">
+          <SectionTitle icon={Landmark} title="Data Sources" />
+          <label className="field-row">
+            Active integration bundle
+            <select
+              className="select-control wide"
+              onChange={(event) => setSettings((items) => ({ ...items, dataSource: event.target.value }))}
+              value={settings.dataSource}
+            >
+              <option>CRM + Custodian + Document Vault</option>
+              <option>CRM only</option>
+              <option>Custodian + Portfolio Accounting</option>
+              <option>Demo data sandbox</option>
+            </select>
+          </label>
+        </section>
       </div>
+
+      <section className="surface">
+        <SectionTitle icon={Save} title="Configuration Summary" />
+        <div className="guardrail-grid">
+          <Guardrail label="External delivery" value={settings.externalApproval ? "Human gate active" : "Human gate disabled"} tone={settings.externalApproval ? "good" : "danger"} />
+          <Guardrail label="Retention" value={`${settings.retentionYears} years`} tone="info" />
+          <Guardrail label="AI threshold" value={`${settings.confidenceThreshold}%`} tone={settings.confidenceThreshold >= 80 ? "good" : "warn"} />
+          <Guardrail label="Data source" value={settings.dataSource} tone="neutral" />
+        </div>
+        <button className="primary-action" onClick={saveSettings} type="button">
+          <Save size={16} /> Save governance settings
+        </button>
+      </section>
     </div>
   );
 }
@@ -926,6 +1611,7 @@ type IntelligencePanelProps = {
   auditEvents: AuditEvent[];
   openReviews: ComplianceReview[];
   pendingActions: MeetingAction[];
+  role: Role;
   selectedClient: Client;
   setActiveView: (view: ViewKey) => void;
 };
@@ -935,6 +1621,7 @@ function IntelligencePanel({
   auditEvents,
   openReviews,
   pendingActions,
+  role,
   selectedClient,
   setActiveView,
 }: IntelligencePanelProps) {
@@ -951,31 +1638,35 @@ function IntelligencePanel({
           <button
             className="insight-row"
             key={recommendation.id}
-            onClick={() => setActiveView(recommendation.gate === "Compliance review" ? "compliance" : "meeting")}
+            onClick={() => setActiveView(role === "Client" ? "clients" : recommendation.gate === "Compliance review" ? "compliance" : "meeting")}
             type="button"
           >
             <span>{recommendation.title}</span>
-            <StatusPill tone={recommendation.conflictCheck} label={`${recommendation.confidence}%`} />
+            <StatusPill tone={recommendation.conflictCheck} label={role === "Client" ? "Shared" : `${recommendation.confidence}%`} />
           </button>
         ))}
       </div>
 
-      <div className="insight-block">
-        <SectionTitle icon={AlertTriangle} title="Open Control Work" compact />
-        <div className="mini-stat-row">
-          <span>{pendingActions.length} actions</span>
-          <button onClick={() => setActiveView("meeting")} type="button">Meeting</button>
-        </div>
-        <div className="mini-stat-row">
-          <span>{openReviews.length} reviews</span>
-          <button onClick={() => setActiveView("compliance")} type="button">Compliance</button>
-        </div>
-      </div>
+      {role !== "Client" && (
+        <>
+          <div className="insight-block">
+            <SectionTitle icon={AlertTriangle} title="Open Control Work" compact />
+            <div className="mini-stat-row">
+              <span>{pendingActions.length} actions</span>
+              <button onClick={() => setActiveView("meeting")} type="button">Meeting</button>
+            </div>
+            <div className="mini-stat-row">
+              <span>{openReviews.length} reviews</span>
+              <button onClick={() => setActiveView("compliance")} type="button">Compliance</button>
+            </div>
+          </div>
 
-      <div className="insight-block">
-        <SectionTitle icon={FileCheck2} title="Evidence Snapshot" compact />
-        <AuditList events={auditEvents.slice(0, 3)} compact />
-      </div>
+          <div className="insight-block">
+            <SectionTitle icon={FileCheck2} title="Evidence Snapshot" compact />
+            <AuditList events={auditEvents.slice(0, 3)} compact />
+          </div>
+        </>
+      )}
 
       <div className="insight-block">
         <SectionTitle icon={Activity} title="View Context" compact />
@@ -1001,6 +1692,15 @@ function ViewHeader({ eyebrow, title, subtitle }: { eyebrow: string; title: stri
   );
 }
 
+function RoleModeBanner({ role }: { role: Role }) {
+  return (
+    <div className={clsx("role-banner", `role-${role.toLowerCase()}`)}>
+      <strong>{roleCopy[role].title}</strong>
+      <span>{roleCopy[role].detail}</span>
+    </div>
+  );
+}
+
 function SectionTitle({
   compact,
   icon: Icon,
@@ -1021,20 +1721,24 @@ function SectionTitle({
 function MetricTile({
   icon: Icon,
   label,
+  onClick,
   tone = "neutral",
   value,
 }: {
   icon: typeof Activity;
   label: string;
+  onClick?: () => void;
   tone?: StatusTone;
   value: string;
 }) {
+  const Element = onClick ? "button" : "article";
+
   return (
-    <article className={clsx("metric-tile", `tone-${tone}`)}>
+    <Element className={clsx("metric-tile", onClick && "clickable", `tone-${tone}`)} onClick={onClick}>
       <Icon size={20} />
       <span>{label}</span>
       <strong>{value}</strong>
-    </article>
+    </Element>
   );
 }
 
@@ -1124,27 +1828,20 @@ function ScenarioCard({
   );
 }
 
-function SettingsSection({
-  icon: Icon,
-  items,
-  title,
+function ToggleRow({
+  checked,
+  label,
+  onChange,
 }: {
-  icon: typeof Activity;
-  items: string[];
-  title: string;
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
 }) {
   return (
-    <section className="surface settings-section">
-      <SectionTitle icon={Icon} title={title} />
-      <ul>
-        {items.map((item) => (
-          <li key={item}>
-            <Check size={15} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <label className="toggle-row">
+      <span>{label}</span>
+      <input checked={checked} onChange={(event) => onChange(event.target.checked)} type="checkbox" />
+    </label>
   );
 }
 
