@@ -2852,3 +2852,35 @@ small,
 .view-header p * {
   color: var(--muted) !important;
 }
+
+/* Base typography bump */
+:root,
+body {
+  font-size: 14px;
+}
+
+button,
+input,
+select,
+textarea,
+.nav-item,
+.client-switch,
+.search-shell input,
+.search-result strong,
+.health-row strong,
+.primary-action,
+.secondary-action,
+.icon-button,
+.agent-toggle,
+.agent-health,
+.segmented button,
+.body-copy,
+.recommendation p,
+.approval-row p,
+.agent-panel p,
+.review-panel p,
+.team-panel p,
+.scenario-card p,
+.view-header p {
+  font-size: 14px;
+}
