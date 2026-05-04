@@ -2030,3 +2030,37 @@ small,
 .capacity-alert button {
   font-weight: 400;
 }
+
+.goal-row .progress-track,
+.agent-panel .progress-track,
+.team-panel .progress-track,
+.bar-cell .progress-track {
+  height: 9px;
+  background: #e5edf5;
+  border: 1px solid rgba(6, 27, 49, 0.04);
+}
+
+.progress-fill.tone-good {
+  background: linear-gradient(90deg, #15be53 0%, #23d667 100%) !important;
+  box-shadow: rgba(21, 190, 83, 0.28) 0 4px 10px;
+}
+
+.progress-fill.tone-warn {
+  background: linear-gradient(90deg, #9b6829 0%, #c58736 100%) !important;
+  box-shadow: rgba(155, 104, 41, 0.26) 0 4px 10px;
+}
+
+.progress-fill.tone-danger {
+  background: linear-gradient(90deg, #ea2261 0%, #f96bee 100%) !important;
+  box-shadow: rgba(234, 34, 97, 0.24) 0 4px 10px;
+}
+
+.progress-fill.tone-info {
+  background: linear-gradient(90deg, #533afd 0%, #665efd 100%) !important;
+  box-shadow: rgba(83, 58, 253, 0.26) 0 4px 10px;
+}
+
+.progress-fill.tone-neutral {
+  background: linear-gradient(90deg, #64748d 0%, #273951 100%) !important;
+  box-shadow: rgba(39, 57, 81, 0.18) 0 4px 10px;
+}
