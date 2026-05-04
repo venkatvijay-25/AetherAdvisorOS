@@ -1602,7 +1602,6 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
   const [salePercent, setSalePercent] = useState(12);
   const [liquidityMonths, setLiquidityMonths] = useState(18);
   const [period, setPeriod] = useState("YTD");
-  const [ipsExpanded, setIpsExpanded] = useState(true);
   const projectedTaxSavings = Math.round(salePercent * 150000);
 
   return (
@@ -1617,10 +1616,10 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
         <MetricTile icon={CircleDollarSign} label="Tracked assets" value={formatMoney(totalPortfolio)} />
         <MetricTile icon={AlertTriangle} label="Concentration" tone="warn" value="20%" />
         <MetricTile icon={Gauge} label="Liquidity runway" tone="good" value="18 mo" />
-        <MetricTile icon={FileCheck2} label="IPS exceptions" onClick={() => setIpsExpanded((value) => !value)} tone="danger" value="2" />
+        <MetricTile icon={FileCheck2} label="IPS exceptions" onClick={() => document.getElementById("ips-exceptions")?.scrollIntoView({ behavior: "smooth", block: "start" })} tone="danger" value="2" />
       </div>
 
-      {ipsExpanded && <IpsExceptions />}
+      <IpsExceptions />
 
       <section className="surface">
         <SectionTitle icon={BarChart3} title="Allocation Overview" />
@@ -1700,7 +1699,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
 
 function IpsExceptions() {
   return (
-    <section className="surface alert-surface">
+    <section className="surface alert-surface" id="ips-exceptions">
       <SectionTitle icon={FileCheck2} title="IPS Exceptions" />
       <div className="data-list">
         <div className="data-row single">
@@ -1724,6 +1723,11 @@ function IpsExceptions() {
 
 function TeamOs({ actions }: { actions: MeetingAction[] }) {
   const [extraTeam, setExtraTeam] = useState<TeamMember[]>([]);
+  const [teamFormOpen, setTeamFormOpen] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [delegationOpen, setDelegationOpen] = useState(false);
+  const [removedMember, setRemovedMember] = useState<string | null>(null);
+  const [delegationDecision, setDelegationDecision] = useState<string | null>(null);
   const people = [...team, ...extraTeam];
   const humanTasks = [
     {
@@ -1774,6 +1778,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
     };
 
     setExtraTeam((items) => (items.some((item) => item.name === member.name) ? items : [...items, member]));
+    setTeamFormOpen(false);
   };
 
   return (
@@ -1803,6 +1808,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
               <div className="capacity-alert">
                 <AlertTriangle size={15} />
                 <span>Delegation review triggered</span>
+                <button onClick={() => setDelegationOpen(true)} type="button">Review</button>
               </div>
             )}
           </article>
@@ -1846,14 +1852,56 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <Guardrail label="Succession" value="Capture decision rationale from senior advisors" tone="neutral" />
         </div>
         <div className="toolbar-row">
-          <button className="secondary-action" type="button">
+          <button className="secondary-action" onClick={() => setRulesOpen((value) => !value)} type="button">
             <SlidersHorizontal size={16} /> Configure rules
           </button>
-          <button className="secondary-action danger" type="button">
+          <button className="secondary-action danger" onClick={() => setRemovedMember("Priya Shah removed from draft team roster")} type="button">
             <X size={16} /> Remove selected member
           </button>
         </div>
+        {rulesOpen && (
+          <div className="inline-form rule-editor">
+            <label>
+              Over-capacity threshold
+              <input readOnly value="85%" />
+            </label>
+            <label>
+              Default relief action
+              <input readOnly value="Shift prep tasks to AI draft mode" />
+            </label>
+            <button className="primary-action" onClick={() => setRulesOpen(false)} type="button">
+              <Save size={16} /> Save rules
+            </button>
+          </div>
+        )}
+        {removedMember && <div className="inline-form success-form">{removedMember}</div>}
       </section>
+
+      {delegationOpen && (
+        <section className="surface alert-surface">
+          <div className="section-toolbar">
+            <SectionTitle icon={AlertTriangle} title="Delegation Review" />
+            <button className="text-action" onClick={() => setDelegationOpen(false)} type="button">
+              Dismiss <X size={15} />
+            </button>
+          </div>
+          <div className="review-grid">
+            <Guardrail label="Trigger" value="Mina Patel is at 91% capacity and has a blocked Walker packet" tone="danger" />
+            <Guardrail label="Suggested delegate" value="Priya Shah can absorb document prep after onboarding" tone="info" />
+            <Guardrail label="Recommended action" value="Move Walker attorney packet draft to Legacy Architect + Priya review" tone="warn" />
+            <Guardrail label="SLA" value="Unblock before tomorrow's Walker meeting" tone="good" />
+          </div>
+          <div className="toolbar-row">
+            <button className="primary-action" onClick={() => setDelegationDecision("Walker attorney packet reassigned to Legacy Architect with Priya review")} type="button">
+              <ArrowRight size={16} /> Reassign task
+            </button>
+            <button className="secondary-action" onClick={() => setDelegationDecision("Delegation recommendation snoozed until end of day")} type="button">
+              <Clock3 size={16} /> Snooze
+            </button>
+          </div>
+          {delegationDecision && <div className="inline-form success-form">{delegationDecision}</div>}
+        </section>
+      )}
 
       <section className="surface">
         <SectionTitle icon={FileText} title="Mentorship Capture" />
@@ -1863,9 +1911,26 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <Guardrail label="Mina Patel" value="Needs delegation relief on follow-up drafting" tone="danger" />
           <Guardrail label="Jon Bell" value="Compliance patterns ready for AI policy tuning" tone="good" />
         </div>
-        <button className="secondary-action" onClick={addTeamMember} type="button">
-          <UserPlus size={16} /> Add team member
-        </button>
+        <div className="toolbar-row">
+          <button className="secondary-action" onClick={() => setTeamFormOpen((value) => !value)} type="button">
+            <UserPlus size={16} /> Add team member
+          </button>
+        </div>
+        {teamFormOpen && (
+          <div className="inline-form">
+            <label>
+              Name
+              <input readOnly value="Priya Shah" />
+            </label>
+            <label>
+              Role
+              <input readOnly value="Associate Advisor" />
+            </label>
+            <button className="primary-action" onClick={addTeamMember} type="button">
+              <Save size={16} /> Add member
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

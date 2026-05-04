@@ -1249,6 +1249,21 @@ small {
   font-weight: 800;
 }
 
+.capacity-alert button {
+  min-height: 22px;
+  padding: 0 8px;
+  color: var(--red);
+  background: white;
+  border: 1px solid #f1c6c6;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rule-editor {
+  margin-top: 12px;
+}
+
 .bar-cell {
   display: grid;
   gap: 5px;
