@@ -1034,6 +1034,22 @@ small {
   padding: 16px;
 }
 
+.team-panel-wrap {
+  display: grid;
+  gap: 10px;
+}
+
+button.team-panel {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+}
+
+.team-panel.selected {
+  border-color: #b7d4ee;
+  box-shadow: 0 0 0 3px rgba(47, 111, 178, 0.12), var(--shadow);
+}
+
 .agent-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1205,6 +1221,20 @@ small {
   border-radius: 8px;
 }
 
+.inline-form .form-note {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  border: 1px solid #c9ddf2;
+  border-radius: 8px;
+}
+
+.inline-form .form-note strong,
+.inline-form .form-note small {
+  display: block;
+}
+
 .inline-form label {
   display: grid;
   gap: 6px;
@@ -1261,7 +1291,13 @@ small {
 }
 
 .rule-editor {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
   margin-top: 12px;
+}
+
+.embedded-review {
+  margin-top: 4px;
+  box-shadow: 0 14px 35px rgba(191, 61, 61, 0.1);
 }
 
 .bar-cell {

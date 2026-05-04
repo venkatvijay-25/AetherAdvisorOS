@@ -1726,6 +1726,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
   const [teamFormOpen, setTeamFormOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [delegationOpen, setDelegationOpen] = useState(false);
+  const [teamSelection, setTeamSelection] = useState("Mina Patel");
   const [removedMember, setRemovedMember] = useState<string | null>(null);
   const [delegationDecision, setDelegationDecision] = useState<string | null>(null);
   const people = [...team, ...extraTeam];
@@ -1791,27 +1792,42 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
 
       <div className="team-grid">
         {people.map((member) => (
-          <article className="team-panel" key={member.id}>
-            <div className="recommendation-top">
-              <div>
-                <strong>{member.name}</strong>
-                <small>{member.role}</small>
+          <div className="team-panel-wrap" key={member.id}>
+            <button
+              className={clsx("team-panel", teamSelection === member.name && "selected")}
+              onClick={() => setTeamSelection(member.name)}
+              type="button"
+            >
+              <div className="recommendation-top">
+                <div>
+                  <strong>{member.name}</strong>
+                  <small>{member.role}</small>
+                </div>
+                <StatusPill tone={member.risk} label={`${member.capacity}%`} />
               </div>
-              <StatusPill tone={member.risk} label={`${member.capacity}%`} />
-            </div>
-            <ProgressBar value={member.capacity} tone={member.risk} />
-            <p>{member.focus}</p>
-            <small>
-              Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
-            </small>
+              <ProgressBar value={member.capacity} tone={member.risk} />
+              <p>{member.focus}</p>
+              <small>
+                Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
+              </small>
+            </button>
             {member.capacity > 85 && (
-              <div className="capacity-alert">
-                <AlertTriangle size={15} />
-                <span>Delegation review triggered</span>
-                <button onClick={() => setDelegationOpen(true)} type="button">Review</button>
-              </div>
+              <>
+                <div className="capacity-alert">
+                  <AlertTriangle size={15} />
+                  <span>Delegation review triggered</span>
+                  <button onClick={() => setDelegationOpen(true)} type="button">Review</button>
+                </div>
+                {delegationOpen && member.name === "Mina Patel" && (
+                  <DelegationReview
+                    decision={delegationDecision}
+                    onDismiss={() => setDelegationOpen(false)}
+                    onDecision={setDelegationDecision}
+                  />
+                )}
+              </>
             )}
-          </article>
+          </div>
         ))}
       </div>
 
@@ -1855,8 +1871,8 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
           <button className="secondary-action" onClick={() => setRulesOpen((value) => !value)} type="button">
             <SlidersHorizontal size={16} /> Configure rules
           </button>
-          <button className="secondary-action danger" onClick={() => setRemovedMember("Priya Shah removed from draft team roster")} type="button">
-            <X size={16} /> Remove selected member
+          <button className="secondary-action danger" onClick={() => setRemovedMember(`${teamSelection} marked for removal review`)} type="button">
+            <X size={16} /> Remove {teamSelection}
           </button>
         </div>
         {rulesOpen && (
@@ -1869,6 +1885,14 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
               Default relief action
               <input readOnly value="Shift prep tasks to AI draft mode" />
             </label>
+            <label>
+              Role scope
+              <input readOnly value="Client Associate: auto-suggest delegate at 85%" />
+            </label>
+            <label>
+              Lead Advisor exception
+              <input readOnly value="Escalate only after 92% or client-critical task" />
+            </label>
             <button className="primary-action" onClick={() => setRulesOpen(false)} type="button">
               <Save size={16} /> Save rules
             </button>
@@ -1876,32 +1900,6 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
         )}
         {removedMember && <div className="inline-form success-form">{removedMember}</div>}
       </section>
-
-      {delegationOpen && (
-        <section className="surface alert-surface">
-          <div className="section-toolbar">
-            <SectionTitle icon={AlertTriangle} title="Delegation Review" />
-            <button className="text-action" onClick={() => setDelegationOpen(false)} type="button">
-              Dismiss <X size={15} />
-            </button>
-          </div>
-          <div className="review-grid">
-            <Guardrail label="Trigger" value="Mina Patel is at 91% capacity and has a blocked Walker packet" tone="danger" />
-            <Guardrail label="Suggested delegate" value="Priya Shah can absorb document prep after onboarding" tone="info" />
-            <Guardrail label="Recommended action" value="Move Walker attorney packet draft to Legacy Architect + Priya review" tone="warn" />
-            <Guardrail label="SLA" value="Unblock before tomorrow's Walker meeting" tone="good" />
-          </div>
-          <div className="toolbar-row">
-            <button className="primary-action" onClick={() => setDelegationDecision("Walker attorney packet reassigned to Legacy Architect with Priya review")} type="button">
-              <ArrowRight size={16} /> Reassign task
-            </button>
-            <button className="secondary-action" onClick={() => setDelegationDecision("Delegation recommendation snoozed until end of day")} type="button">
-              <Clock3 size={16} /> Snooze
-            </button>
-          </div>
-          {delegationDecision && <div className="inline-form success-form">{delegationDecision}</div>}
-        </section>
-      )}
 
       <section className="surface">
         <SectionTitle icon={FileText} title="Mentorship Capture" />
@@ -1918,6 +1916,10 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
         </div>
         {teamFormOpen && (
           <div className="inline-form">
+            <div className="form-note">
+              <strong>Add the suggested delegate</strong>
+              <small>Priya Shah is recommended by the delegation review and is prefilled for onboarding.</small>
+            </div>
             <label>
               Name
               <input readOnly value="Priya Shah" />
@@ -1933,6 +1935,42 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
         )}
       </section>
     </div>
+  );
+}
+
+function DelegationReview({
+  decision,
+  onDecision,
+  onDismiss,
+}: {
+  decision: string | null;
+  onDecision: (decision: string) => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <section className="surface alert-surface embedded-review">
+      <div className="section-toolbar">
+        <SectionTitle icon={AlertTriangle} title="Delegation Review" />
+        <button className="text-action" onClick={onDismiss} type="button">
+          Dismiss <X size={15} />
+        </button>
+      </div>
+      <div className="review-grid">
+        <Guardrail label="Trigger" value="Mina Patel is at 91% capacity and has a blocked Walker packet" tone="danger" />
+        <Guardrail label="Suggested delegate" value="Priya Shah can absorb document prep after onboarding" tone="info" />
+        <Guardrail label="Recommended action" value="Move Walker attorney packet draft to Legacy Architect + Priya review" tone="warn" />
+        <Guardrail label="SLA" value="Unblock before tomorrow's Walker meeting" tone="good" />
+      </div>
+      <div className="toolbar-row">
+        <button className="primary-action" onClick={() => onDecision("Walker attorney packet reassigned to Legacy Architect with Priya review")} type="button">
+          <ArrowRight size={16} /> Reassign task
+        </button>
+        <button className="secondary-action" onClick={() => onDecision("Delegation recommendation snoozed until end of day")} type="button">
+          <Clock3 size={16} /> Snooze
+        </button>
+      </div>
+      {decision && <div className="inline-form success-form">{decision}</div>}
+    </section>
   );
 }
 
