@@ -2064,3 +2064,670 @@ small,
   background: linear-gradient(90deg, #64748d 0%, #273951 100%) !important;
   box-shadow: rgba(39, 57, 81, 0.18) 0 4px 10px;
 }
+
+/* Institutional advisor workstation theme */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-strong: #f8fafc;
+  --line: #e2e8f0;
+  --line-soft: #edf2f7;
+  --text: #0f172a;
+  --muted-strong: #334155;
+  --muted: #64748b;
+  --muted-light: #94a3b8;
+  --nav-bg: #0d1623;
+  --nav-active: #162033;
+  --nav-text: #94a3b8;
+  --nav-active-text: #f8fafc;
+  --brand: #1c3a6e;
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
+  --blue-hover: #1d4ed8;
+  --purple-hover: #1d4ed8;
+  --purple-light: #bfdbfe;
+  --green: #166534;
+  --green-soft: #f0fdf4;
+  --amber: #92400e;
+  --amber-soft: #fffbeb;
+  --red: #991b1b;
+  --red-soft: #fef2f2;
+  --info-bg: #eff6ff;
+  --info-text: #1e40af;
+  --info-border: #bfdbfe;
+  --good-bg: #f0fdf4;
+  --good-text: #166534;
+  --good-border: #bbf7d0;
+  --warn-bg: #fffbeb;
+  --warn-text: #92400e;
+  --warn-border: #fde68a;
+  --critical-bg: #fef2f2;
+  --critical-text: #991b1b;
+  --critical-border: #fecaca;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 20px rgba(15, 23, 42, 0.04);
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-deep: 0 10px 24px rgba(15, 23, 42, 0.12);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "tnum";
+  font-size: 13px;
+  font-weight: 400;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.38;
+  text-rendering: optimizeLegibility;
+}
+
+.app-shell,
+.main-area {
+  background: var(--bg);
+}
+
+.sidebar {
+  padding: 18px 12px;
+  background: var(--nav-bg);
+  border-right: 0;
+  box-shadow: none;
+}
+
+.brand-lockup {
+  min-height: 42px;
+  padding: 0 8px;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  background: var(--blue);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.brand-lockup strong {
+  color: var(--nav-active-text);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.brand-lockup span,
+.sidebar-help {
+  color: var(--nav-text);
+  font-size: 11px;
+}
+
+.nav-list {
+  gap: 3px;
+}
+
+.nav-item {
+  position: relative;
+  height: 36px;
+  padding: 0 10px 0 14px;
+  color: var(--nav-text);
+  border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nav-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 3px;
+  height: 22px;
+  background: transparent;
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: var(--nav-active-text);
+  background: var(--nav-active);
+  border-color: transparent;
+}
+
+.nav-item.active::before {
+  background: #3b82f6;
+}
+
+.sidebar-section {
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.sidebar .eyebrow {
+  color: var(--nav-text);
+}
+
+.client-switch {
+  min-height: 38px;
+  color: var(--nav-active-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+  box-shadow: none;
+  font-size: 12px;
+}
+
+.topbar {
+  height: 60px;
+  padding: 0 20px;
+  background: rgba(244, 245, 247, 0.92);
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+}
+
+.content-grid {
+  gap: 16px;
+  padding: 16px;
+  min-height: calc(100vh - 60px);
+}
+
+.view-stack {
+  gap: 14px;
+}
+
+.view-header {
+  min-height: auto;
+  padding: 0 0 4px;
+}
+
+.view-header h1 {
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.view-header p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.eyebrow,
+.search-caption,
+.reasoning-box span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.role-banner {
+  display: inline-flex;
+  justify-content: flex-start;
+  width: fit-content;
+  min-height: 30px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  color: var(--info-text);
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-left: 1px solid var(--info-border);
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.role-banner::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 2px;
+  background: var(--blue);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.role-banner strong {
+  color: var(--info-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.role-banner span {
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.surface,
+.intelligence-panel,
+.agent-panel,
+.review-panel,
+.team-panel,
+.scenario-card,
+.metric-tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: var(--shadow-soft);
+}
+
+.surface {
+  padding: 14px;
+}
+
+.surface:hover,
+.metric-tile.clickable:hover {
+  box-shadow: var(--shadow);
+}
+
+.metric-grid {
+  gap: 12px;
+}
+
+.metric-tile,
+.metric-tile.tone-good,
+.metric-tile.tone-warn,
+.metric-tile.tone-danger,
+.metric-tile.tone-info,
+.metric-tile.tone-neutral {
+  min-height: 88px;
+  padding: 13px 14px;
+  background: #ffffff !important;
+  border: 1px solid var(--line) !important;
+  border-left-width: 3px !important;
+  border-top-width: 1px !important;
+  border-radius: 4px;
+}
+
+.metric-tile.tone-good {
+  border-left-color: #22c55e !important;
+}
+
+.metric-tile.tone-warn {
+  border-left-color: #f59e0b !important;
+}
+
+.metric-tile.tone-danger {
+  border-left-color: #ef4444 !important;
+}
+
+.metric-tile.tone-info,
+.metric-tile:not(.tone-good):not(.tone-warn):not(.tone-danger):not(.tone-neutral) {
+  border-left-color: var(--blue) !important;
+}
+
+.metric-tile svg {
+  color: var(--muted);
+}
+
+.metric-tile span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.metric-tile strong,
+.scenario-card strong,
+.panel-header strong {
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.metric-tile.tone-good strong {
+  color: var(--good-text);
+}
+
+.metric-tile.tone-warn strong {
+  color: var(--warn-text);
+}
+
+.metric-tile.tone-danger strong {
+  color: var(--critical-text);
+}
+
+.metric-tile.tone-info strong,
+.metric-tile:not(.tone-good):not(.tone-warn):not(.tone-danger):not(.tone-neutral) strong {
+  color: var(--info-text);
+}
+
+.section-title {
+  margin-bottom: 10px;
+}
+
+.section-title h2 {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.section-title.compact h2 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.timeline-item,
+.rank-row,
+.client-row,
+.work-row,
+.data-row,
+.asset-row,
+.approval-row,
+.audit-row,
+.insight-row,
+.control-item,
+.guardrail,
+.event-row,
+.search-result,
+.health-row,
+.brief-item,
+.recommendation,
+.family-node,
+.meeting-card,
+.reasoning-box,
+.mini-stat-row,
+.field-row,
+.toggle-row,
+.slider-grid label,
+.inline-form,
+.suggested-delegate-callout {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.timeline-item:hover,
+.rank-row:hover,
+.client-row:hover,
+.insight-row:hover,
+.search-result:hover,
+.health-row:hover,
+.meeting-card:hover {
+  background: var(--surface-strong);
+  border-color: var(--info-border);
+}
+
+.client-row.active,
+.meeting-card.active,
+.team-panel.selected {
+  color: var(--text);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+.primary-action,
+.secondary-action,
+.icon-button,
+.agent-toggle,
+.capacity-alert button {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primary-action {
+  color: #ffffff;
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow: none;
+}
+
+.primary-action:hover {
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
+}
+
+.secondary-action {
+  color: var(--blue);
+  background: #ffffff;
+  border-color: var(--info-border);
+}
+
+.secondary-action:hover {
+  background: var(--info-bg);
+  border-color: var(--blue);
+}
+
+.secondary-action.danger,
+.icon-button.reject {
+  color: var(--critical-text);
+  background: var(--critical-bg);
+  border-color: var(--critical-border);
+}
+
+.icon-button.approve {
+  color: var(--good-text);
+  background: var(--good-bg);
+  border-color: var(--good-border);
+}
+
+.status-pill {
+  min-height: 20px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.tone-good {
+  color: var(--good-text);
+  background: var(--good-bg);
+  border-color: var(--good-border);
+}
+
+.tone-warn {
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.tone-danger {
+  color: var(--critical-text);
+  background: var(--critical-bg);
+  border-color: var(--critical-border);
+}
+
+.tone-info {
+  color: var(--info-text);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.tone-neutral {
+  color: var(--muted);
+  background: #ffffff;
+  border-color: var(--line);
+}
+
+small,
+.body-copy,
+.recommendation p,
+.approval-row p,
+.agent-panel p,
+.review-panel p,
+.team-panel p,
+.scenario-card p,
+.view-header p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.rank-value,
+.numeric,
+.timeline-time,
+.audit-time,
+.metric-tile strong,
+.scenario-card strong,
+.status-pill {
+  font-feature-settings: "tnum";
+}
+
+.search-shell,
+.segmented,
+.agent-health,
+.health-popover,
+.search-results,
+.transcript-input,
+.instruction-box input,
+.field-row input,
+.field-row select,
+.select-control,
+.settings-section input[type="number"],
+.inline-form input {
+  background: #ffffff;
+  border-color: var(--line);
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.segmented {
+  background: #eef2f7;
+}
+
+.segmented button {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented button.active {
+  color: var(--text);
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.agent-health {
+  color: var(--info-text);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.intelligence-panel {
+  gap: 14px;
+  padding: 14px;
+}
+
+.panel-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.insight-block {
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.insight-row {
+  min-height: 44px;
+}
+
+.mini-stat-row {
+  min-height: 36px;
+}
+
+.progress-track,
+.allocation-bar {
+  background: #e2e8f0;
+}
+
+.progress-fill.tone-good,
+.allocation-segment.tone-good {
+  background: #16a34a !important;
+  box-shadow: none;
+}
+
+.progress-fill.tone-warn,
+.allocation-segment.tone-warn {
+  background: #d97706 !important;
+  box-shadow: none;
+}
+
+.progress-fill.tone-danger,
+.allocation-segment.tone-danger {
+  background: #dc2626 !important;
+  box-shadow: none;
+}
+
+.progress-fill.tone-info,
+.allocation-segment.tone-info {
+  background: var(--blue) !important;
+  box-shadow: none;
+}
+
+.role-banner.role-compliance {
+  color: var(--critical-text);
+  background: var(--critical-bg);
+  border-color: var(--critical-border);
+}
+
+.role-banner.role-client {
+  color: var(--good-text);
+  background: var(--good-bg);
+  border-color: var(--good-border);
+}
+
+.role-banner.role-compliance::before {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.role-banner.role-client::before {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.role-banner.role-compliance strong,
+.role-banner.role-compliance span {
+  color: var(--critical-text);
+}
+
+.role-banner.role-client strong,
+.role-banner.role-client span {
+  color: var(--good-text);
+}
+
+.allocation-legend,
+.family-node span:last-child,
+.settings-section li,
+.mini-stat-row span {
+  color: var(--muted-strong);
+}
+
+.reasoning-box,
+.reasoning-box small {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.empty-work-state,
+.success-form {
+  color: var(--good-text);
+  background: var(--good-bg);
+  border-color: var(--good-border);
+}
+
+.capacity-alert {
+  color: var(--critical-text);
+  background: var(--critical-bg);
+  border-color: var(--critical-border);
+  border-radius: 4px;
+}
+
+.suggested-delegate-callout,
+.inline-form .form-note {
+  color: var(--info-text);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
