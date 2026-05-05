@@ -3300,3 +3300,34 @@ small,
 .ai-queue-title {
   color: var(--text) !important;
 }
+
+/* Explicit neutral prose clamp for context-colored rows */
+html body .family-map-description,
+html body .advisor-client-list,
+html body .workload-task-description,
+html body .life-event-sub-text,
+html body .household-risk-description,
+html body .ai-queue-description,
+html body .capacity-explanation,
+html body .capacity-explanation * {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  font-size: var(--font-body) !important;
+  line-height: var(--body-line-height) !important;
+  text-decoration: none !important;
+}
+
+html body .ai-queue-title {
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+}
+
+html body .status-pill,
+html body .status-pill.status-prep {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 0 !important;
+  border-radius: 9999px !important;
+  overflow: hidden;
+}

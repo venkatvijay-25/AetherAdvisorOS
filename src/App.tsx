@@ -888,7 +888,7 @@ function Dashboard({
                 <RiskDot tone={client.retentionRisk} />
                 <span>
                   <strong>{client.household}</strong>
-                  <small>{client.primaryGoal}</small>
+                  <small className="household-risk-description">{client.primaryGoal}</small>
                 </span>
                 <span className="rank-value">{formatMoney(client.aum)}</span>
               </button>
@@ -1832,7 +1832,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
               </div>
               <ProgressBar value={member.capacity} tone={member.risk} />
               <p className="advisor-client-list">{member.focus}</p>
-              <small>
+              <small className="capacity-explanation">
                 Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
               </small>
             </button>
