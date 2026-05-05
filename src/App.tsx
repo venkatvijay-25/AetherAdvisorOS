@@ -783,7 +783,7 @@ function Dashboard({
                   <RiskDot tone={client.retentionRisk} />
                   <span>
                     <strong>{client.household}</strong>
-                    <small>{client.primaryGoal}</small>
+                    <small className="household-risk-description">{client.primaryGoal}</small>
                   </span>
                   <span className="rank-value">{toneLabel[client.retentionRisk]}</span>
                 </button>
@@ -905,8 +905,8 @@ function Dashboard({
               <div className="work-row" key={action.id}>
                 <StatusPill tone={action.risk} label={action.approvalGate} />
                 <span>
-                  <strong>{action.title}</strong>
-                  <small>{action.detail}</small>
+                  <strong className="ai-queue-title">{action.title}</strong>
+                  <small className="ai-queue-description">{action.detail}</small>
                 </span>
               </div>
             ))}
