@@ -3009,3 +3009,57 @@ small,
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep semantic color out of prose */
+.family-node > span:not(.status-pill),
+.family-node > small,
+.event-row > span > small,
+.team-panel > p,
+.team-panel > small,
+.asset-row > span > small,
+.work-row > span > small,
+.data-row > span > small,
+.timeline-item > span > small,
+.approval-row small,
+.audit-row small,
+.insight-row small,
+.control-item small,
+.guardrail small,
+.recommendation p,
+.review-panel p,
+.agent-panel p {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+.asset-row strong,
+.work-row strong,
+.data-row strong,
+.timeline-item strong,
+.approval-row strong,
+.audit-row strong,
+.family-node strong,
+.team-panel strong {
+  color: var(--text) !important;
+}
+
+.family-node > .status-pill.tone-good,
+.status-pill.tone-good {
+  color: var(--good-text) !important;
+}
+
+.family-node > .status-pill.tone-warn,
+.status-pill.tone-warn {
+  color: var(--warn-text) !important;
+}
+
+.family-node > .status-pill.tone-danger,
+.status-pill.tone-danger {
+  color: var(--critical-text) !important;
+}
+
+.family-node > .status-pill.tone-info,
+.status-pill.tone-info {
+  color: var(--info-text) !important;
+}
