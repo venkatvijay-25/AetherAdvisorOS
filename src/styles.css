@@ -3331,3 +3331,142 @@ html body .status-pill.status-prep {
   border-radius: 9999px !important;
   overflow: hidden;
 }
+
+/* Click affordance cleanup */
+.surface:hover,
+.family-node:hover,
+.agent-panel:hover,
+.review-panel:hover,
+.team-panel:hover,
+.scenario-card:hover,
+.intelligence-panel:hover,
+.recommendation:hover,
+.brief-item:hover,
+.reasoning-box:hover {
+  box-shadow: var(--modern-card-shadow) !important;
+}
+
+article.metric-tile,
+.surface,
+.family-node,
+.agent-panel,
+.review-panel,
+.scenario-card,
+.recommendation,
+.brief-item,
+.reasoning-box,
+.work-row,
+.data-row,
+.asset-row,
+.audit-row,
+.control-item,
+.guardrail,
+.event-row,
+.mini-stat-row {
+  cursor: default !important;
+}
+
+.metric-tile.clickable,
+button.timeline-item,
+button.rank-row,
+button.client-row,
+button.insight-row,
+button.search-result,
+button.health-row,
+button.meeting-card,
+button.team-panel,
+.client-switch,
+.agent-health {
+  position: relative;
+  cursor: pointer !important;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.metric-tile.clickable::after,
+button.timeline-item::after,
+button.rank-row::after,
+button.client-row::after,
+button.insight-row::after,
+button.search-result::after,
+button.health-row::after,
+button.meeting-card::after,
+button.team-panel::after {
+  content: "›";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--blue);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-50%) translateX(-3px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  pointer-events: none;
+}
+
+.metric-tile.clickable,
+button.timeline-item,
+button.rank-row,
+button.client-row,
+button.insight-row,
+button.search-result,
+button.health-row,
+button.meeting-card,
+button.team-panel {
+  padding-right: 34px !important;
+}
+
+.metric-tile.clickable:hover,
+button.timeline-item:hover,
+button.rank-row:hover,
+button.client-row:hover,
+button.insight-row:hover,
+button.search-result:hover,
+button.health-row:hover,
+button.meeting-card:hover,
+button.team-panel:hover {
+  background: #f8fafc !important;
+  box-shadow: inset 0 0 0 1px #dbeafe, var(--modern-card-shadow) !important;
+  transform: translateY(-1px);
+}
+
+.metric-tile.clickable:hover::after,
+button.timeline-item:hover::after,
+button.rank-row:hover::after,
+button.client-row:hover::after,
+button.insight-row:hover::after,
+button.search-result:hover::after,
+button.health-row:hover::after,
+button.meeting-card:hover::after,
+button.team-panel:hover::after,
+.metric-tile.clickable:focus-visible::after,
+button.timeline-item:focus-visible::after,
+button.rank-row:focus-visible::after,
+button.client-row:focus-visible::after,
+button.insight-row:focus-visible::after,
+button.search-result:focus-visible::after,
+button.health-row:focus-visible::after,
+button.meeting-card:focus-visible::after,
+button.team-panel:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.metric-tile.clickable:focus-visible,
+button.timeline-item:focus-visible,
+button.rank-row:focus-visible,
+button.client-row:focus-visible,
+button.insight-row:focus-visible,
+button.search-result:focus-visible,
+button.health-row:focus-visible,
+button.meeting-card:focus-visible,
+button.team-panel:focus-visible,
+.client-switch:focus-visible,
+.agent-health:focus-visible {
+  outline: 2px solid #bfdbfe;
+  outline-offset: 2px;
+}
