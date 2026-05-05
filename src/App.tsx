@@ -82,6 +82,12 @@ const toneLabel: Record<StatusTone, string> = {
   info: "Info",
 };
 
+const influenceTone = (influence: string): StatusTone => {
+  if (influence === "High") return "good";
+  if (influence === "Medium") return "info";
+  return "neutral";
+};
+
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -1016,7 +1022,7 @@ function ClientHub({
                   <strong>{member.name}</strong>
                   <small>{member.relation} - {member.age}</small>
                 </div>
-                <StatusPill tone={member.sentiment} label={member.influence} />
+                <StatusPill tone={influenceTone(member.influence)} label={member.influence} />
                 <span>{member.priority}</span>
                 {index > 0 && <small>{connectionNote(member.relation)}</small>}
               </div>
