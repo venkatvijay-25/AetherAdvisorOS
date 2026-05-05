@@ -2884,3 +2884,72 @@ textarea,
 .view-header p {
   font-size: 14px;
 }
+
+/* Accessibility typography pass */
+:root {
+  --muted: #475569;
+  --muted-light: #475569;
+  --text-muted: #475569;
+  --font-body: 13px;
+  --font-label: 12px;
+  --body-line-height: 1.55;
+}
+
+body {
+  line-height: var(--body-line-height);
+}
+
+small,
+.body-copy,
+.recommendation p,
+.approval-row p,
+.agent-panel p,
+.review-panel p,
+.team-panel p,
+.scenario-card p,
+.view-header p,
+.search-result small,
+.health-row small,
+.timeline-item small,
+.rank-row small,
+.client-row small,
+.work-row small,
+.data-row small,
+.asset-row small,
+.approval-row small,
+.audit-row small,
+.insight-row small,
+.control-item small,
+.guardrail small,
+.event-row small,
+.brief-item span,
+.mini-stat-row span,
+.sidebar-help,
+.family-node span:last-child,
+.meeting-card small {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+.eyebrow,
+.search-caption,
+.reasoning-box span,
+.metric-tile span,
+.section-title.compact h2,
+.timeline-time,
+.audit-time {
+  color: var(--text-muted) !important;
+  font-size: var(--font-label) !important;
+  line-height: var(--body-line-height) !important;
+}
+
+.status-pill {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.sidebar .eyebrow,
+.sidebar-help {
+  color: var(--nav-text) !important;
+}
