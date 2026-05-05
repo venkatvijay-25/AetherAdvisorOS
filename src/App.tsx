@@ -1024,7 +1024,7 @@ function ClientHub({
                 </div>
                 <StatusPill tone={influenceTone(member.influence)} label={member.influence} />
                 <span>{member.priority}</span>
-                {index > 0 && <small>{connectionNote(member.relation)}</small>}
+                {index > 0 && <small className="family-map-description">{connectionNote(member.relation)}</small>}
               </div>
             ))}
           </div>
@@ -1040,7 +1040,7 @@ function ClientHub({
                 <span className="event-index">{index + 1}</span>
                 <span>
                   <strong>{event}</strong>
-                  <small>{index === 0 ? "Trigger: create planning task today" : "Monitor and refresh assumptions"}</small>
+                  <small className="life-event-sub-text">{index === 0 ? "Trigger: create planning task today" : "Monitor and refresh assumptions"}</small>
                 </span>
               </div>
             ))}
@@ -1812,7 +1812,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
                 <StatusPill tone={member.risk} label={`${member.capacity}%`} />
               </div>
               <ProgressBar value={member.capacity} tone={member.risk} />
-              <p>{member.focus}</p>
+              <p className="advisor-client-list">{member.focus}</p>
               <small>
                 Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
               </small>
@@ -1844,7 +1844,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
             <div className="asset-row" key={action.id}>
               <span>
                 <strong>{action.title}</strong>
-                <small>{clients.find((client) => client.id === action.clientId)?.household} - {action.detail}</small>
+                <small className="workload-task-description">{clients.find((client) => client.id === action.clientId)?.household} - {action.detail}</small>
               </span>
               <span className="numeric">{action.owner}</span>
               <StatusPill tone={action.risk} label={action.due} />
@@ -1855,7 +1855,7 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
             <div className="asset-row human-task" key={task.id}>
               <span>
                 <strong>{task.title}</strong>
-                <small>{task.detail}</small>
+                <small className="workload-task-description">{task.detail}</small>
               </span>
               <span className="numeric">{task.owner}</span>
               <StatusPill tone={task.risk} label={task.due} />

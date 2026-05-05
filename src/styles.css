@@ -3063,3 +3063,12 @@ small,
 .status-pill.tone-info {
   color: var(--info-text) !important;
 }
+
+.family-map-description,
+.advisor-client-list,
+.workload-task-description,
+.life-event-sub-text {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body) !important;
+  line-height: var(--body-line-height) !important;
+}
