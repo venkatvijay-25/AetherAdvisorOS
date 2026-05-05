@@ -74,6 +74,12 @@ const navItems: NavItem[] = [
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
+const navGroups: Array<{ label: string; keys: ViewKey[] }> = [
+  { label: "Workspace", keys: ["dashboard", "clients", "meeting", "portfolio"] },
+  { label: "Intelligence", keys: ["agents", "compliance"] },
+  { label: "Operations", keys: ["team", "settings"] },
+];
+
 const toneLabel: Record<StatusTone, string> = {
   good: "Good",
   warn: "Watch",
@@ -533,19 +539,32 @@ function App() {
         </div>
 
         <nav className="nav-list" aria-label="Primary">
-          {visibleNavItems.map((item) => {
-            const Icon = item.icon;
+          {navGroups.map((group) => {
+            const groupItems = group.keys
+              .map((key) => visibleNavItems.find((item) => item.key === key))
+              .filter((item): item is NavItem => Boolean(item));
+
+            if (!groupItems.length) return null;
+
             return (
-              <button
-                className={clsx("nav-item", activeView === item.key && "active")}
-                key={item.key}
-                onClick={() => setActiveView(item.key)}
-                title={item.label}
-                type="button"
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </button>
+              <div className="nav-group" key={group.label}>
+                <div className="nav-group-label">{group.label}</div>
+                {groupItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      className={clsx("nav-item", activeView === item.key && "active")}
+                      key={item.key}
+                      onClick={() => setActiveView(item.key)}
+                      title={item.label}
+                      type="button"
+                    >
+                      <Icon size={18} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
