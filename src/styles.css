@@ -3507,6 +3507,21 @@ button.team-panel:focus-visible,
   min-width: 0;
 }
 
+.future-row-actions,
+.status-stack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.icon-button.subtle {
+  width: 28px;
+  height: 28px;
+  color: var(--text-muted);
+  background: #ffffff;
+}
+
 .future-signal-row small,
 .future-alert-row small,
 .wealth-graph-card p,
@@ -3565,6 +3580,87 @@ button.team-panel:focus-visible,
 
 .future-validation-card .roadmap-meta-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.digest-panel,
+.playbook-panel {
+  gap: 10px;
+}
+
+.scale-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -4px;
+}
+
+.scale-row small,
+.agent-attribution,
+.sync-status {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body);
+  line-height: var(--body-line-height);
+}
+
+.driver-grid,
+.regtech-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.live-capture-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+.live-capture-strip span,
+.agent-attribution {
+  display: grid;
+  gap: 3px;
+}
+
+.regtech-detail-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--modern-card-shadow);
+}
+
+.review-panel.sla-urgent {
+  box-shadow: inset 3px 0 0 #dc2626, var(--modern-card-shadow-hover) !important;
+}
+
+.review-panel.sla-urgent .status-pill {
+  animation: slaPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes slaPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.agent-activity-row {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+
+.asset-row.urgent-task {
+  background: #fff7ed;
+  box-shadow: inset 3px 0 0 #f97316;
 }
 
 /* Roadmap execution surface */

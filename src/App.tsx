@@ -92,6 +92,14 @@ const toneLabel: Record<StatusTone, string> = {
   info: "Info",
 };
 
+const tonePriority: Record<StatusTone, number> = {
+  danger: 0,
+  warn: 1,
+  info: 2,
+  neutral: 3,
+  good: 4,
+};
+
 const influenceTone = (influence: string): StatusTone => {
   if (influence === "High") return "good";
   if (influence === "Medium") return "info";
@@ -214,33 +222,6 @@ const meetingCopilotSignals = [
     label: "CRM-ready brief",
     value: "Zero-click recap can sync after advisor and compliance approval gates clear.",
     tone: "good" as StatusTone,
-  },
-];
-
-const scenarioComparisons = [
-  {
-    plan: "Plan A",
-    title: "Q3 staged sale",
-    tax: "$1.8M estimated savings",
-    compliance: "Reg BI rationale complete",
-    risk: "Single issuer drops to 16%",
-    tone: "good" as StatusTone,
-  },
-  {
-    plan: "Plan B",
-    title: "Q4 delayed sale",
-    tax: "$1.1M estimated savings",
-    compliance: "Needs updated acquisition assumptions",
-    risk: "Single issuer remains above IPS range",
-    tone: "warn" as StatusTone,
-  },
-  {
-    plan: "Stress",
-    title: "15% equity drawdown",
-    tax: "Loss harvesting window opens",
-    compliance: "Client memo requires hypothetical performance disclosure",
-    risk: "Liquidity runway falls to 13 months",
-    tone: "danger" as StatusTone,
   },
 ];
 
@@ -772,7 +753,7 @@ function App() {
           />
         );
       case "portfolio":
-        return <PortfolioManager selectedClient={selectedClient} />;
+        return <PortfolioManager selectedClient={selectedClient} setActiveView={setActiveView} />;
       case "team":
         return <TeamOs actions={actions} />;
       case "roadmap":
@@ -981,11 +962,16 @@ function Dashboard({
   setSelectedMeetingId,
 }: DashboardProps) {
   const [dashboardFilter, setDashboardFilter] = useState<"risk" | "approvals" | "reviews" | "cleared" | null>(null);
+  const [dismissedPredictive, setDismissedPredictive] = useState<string[]>([]);
+  const [completedPredictive, setCompletedPredictive] = useState<string[]>([]);
+  const [digestOpen, setDigestOpen] = useState(false);
   const totalAum = sum(clients.map((client) => client.aum));
   const criticalHouseholds = clients.filter((client) => client.retentionRisk !== "good").length;
   const approvedToday = actions.filter((action) => action.status === "Approved").length;
   const atRiskClients = clients.filter((client) => client.retentionRisk !== "good");
   const approvedActions = actions.filter((action) => action.status === "Approved");
+  const activePredictiveSignals = predictiveSignals.filter((signal) => !dismissedPredictive.includes(signal.title));
+  const sortedPriorityAlerts = [...priorityAlerts].sort((a, b) => tonePriority[a.tone] - tonePriority[b.tone]);
 
   return (
     <div className="view-stack">
@@ -1106,35 +1092,88 @@ function Dashboard({
         <section className="surface future-surface">
           <SectionTitle icon={Sparkles} title="Predictive Intelligence" />
           <div className="future-signal-list">
-            {predictiveSignals.map((signal) => (
+            {activePredictiveSignals.map((signal) => {
+              const isComplete = completedPredictive.includes(signal.title);
+
+              return (
               <div className="future-signal-row" key={signal.title}>
                 <RiskDot tone={signal.tone} />
                 <span>
                   <strong>{signal.title}</strong>
                   <small>{signal.detail}</small>
                 </span>
-                <StatusPill tone={signal.tone} label={signal.meta} />
+                <div className="future-row-actions">
+                  <StatusPill tone={isComplete ? "good" : signal.tone} label={isComplete ? "Done" : signal.meta} />
+                  <button
+                    className="secondary-action compact-action"
+                    disabled={isComplete}
+                    onClick={() => setCompletedPredictive((items) => [...items, signal.title])}
+                    type="button"
+                  >
+                    Mark done
+                  </button>
+                  <button
+                    className="icon-button subtle"
+                    onClick={() => setDismissedPredictive((items) => [...items, signal.title])}
+                    title="Dismiss prediction"
+                    type="button"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
               </div>
-            ))}
+              );
+            })}
+            {!activePredictiveSignals.length && (
+              <div className="empty-work-state">
+                <Check size={18} />
+                <span>
+                  <strong>Predictive queue clear</strong>
+                  <small>Dismissed or completed predictions will return when fresh evidence changes the model.</small>
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
         <section className="surface future-surface">
           <SectionTitle icon={Activity} title="Priority Alert Inbox" />
           <div className="future-signal-list">
-            {priorityAlerts.map((alert) => (
+            {sortedPriorityAlerts.map((alert) => (
               <div className="future-alert-row" key={alert.title}>
                 <RiskDot tone={alert.tone} />
                 <span>
                   <strong>{alert.title}</strong>
                   <small>{alert.detail}</small>
                 </span>
-                <button className="secondary-action compact-action" onClick={() => setActiveView(alert.view)} type="button">
+                <button
+                  className="secondary-action compact-action"
+                  onClick={() => {
+                    if (alert.title === "Morning digest ready") {
+                      setDigestOpen(true);
+                      return;
+                    }
+
+                    setActiveView(alert.view);
+                  }}
+                  type="button"
+                >
                   {alert.cta}
                 </button>
               </div>
             ))}
           </div>
+          {digestOpen && (
+            <div className="inline-form digest-panel">
+              <div className="form-note">
+                <strong>Morning advisor digest</strong>
+                <small>Prepared for Sarah Mitchell before market open.</small>
+              </div>
+              <MiniMeta label="1" value="Review Chen compliance language before recap leaves draft state." />
+              <MiniMeta label="2" value="Delegate Walker attorney packet away from Mina before tomorrow's meeting." />
+              <MiniMeta label="3" value="Stage Chen 10b5-1 scenario and attach Reg BI rationale." />
+            </div>
+          )}
         </section>
       </div>
 
@@ -1255,6 +1294,7 @@ function ClientHub({
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [accountFormOpen, setAccountFormOpen] = useState(false);
   const [uploadState, setUploadState] = useState<string | null>(null);
+  const [governanceOpen, setGovernanceOpen] = useState(false);
   const clientRequests = requestedDocuments.filter((item) => item.startsWith(selectedClient.household));
   const displayedGoals = [...selectedClient.goals, ...(addedGoals[selectedClient.id] ?? [])];
   const displayedAccounts = [...selectedClient.accounts, ...(addedAccounts[selectedClient.id] ?? [])];
@@ -1363,9 +1403,26 @@ function ClientHub({
               </div>
               <p>{signal.detail}</p>
               <ProgressBar value={signal.label === "Governance readiness" ? 82 : signal.label === "Next-gen engagement" ? 71 : 64} tone={signal.tone} />
+              <div className="scale-row">
+                <small>0</small>
+                <small>{signal.label === "Estate flow simulation" ? "Projected estate flow" : "Target 100"}</small>
+              </div>
+              {signal.label === "Governance readiness" && (
+                <button className="text-action" onClick={() => setGovernanceOpen((value) => !value)} type="button">
+                  {governanceOpen ? "Hide drivers" : "View drivers"} <ChevronRight size={15} />
+                </button>
+              )}
             </article>
           ))}
         </div>
+        {governanceOpen && (
+          <div className="driver-grid">
+            <Guardrail label="Participation" value="Avery attends 2 of 3 council prep sessions; Marcus has not confirmed final agenda." tone="warn" />
+            <Guardrail label="Role clarity" value="Foundation oversight is assigned, but successor voting rights still need documentation." tone="info" />
+            <Guardrail label="Document gap" value="Trust amendment remains critical and pulls 9 points from the readiness score." tone="danger" />
+            <Guardrail label="Path to 100" value="Resolve trust amendment, confirm council roles, and attach acquisition-vote minutes." tone="good" />
+          </div>
+        )}
       </section>
 
       <div className="two-column">
@@ -1410,6 +1467,11 @@ function ClientHub({
                   <strong>{request.replace(`${selectedClient.household}: `, "")}</strong>
                   <small>{clientRequests.length ? "Request queued for client follow-up" : "All current document needs are visible below"}</small>
                 </span>
+                {!clientRequests.length && (
+                  <button className="secondary-action compact-action" onClick={() => requestDocument("Estate documents before acquisition vote")} type="button">
+                    Request estate docs
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1584,6 +1646,7 @@ function MeetingAssistant({
   const [transcriptDraft, setTranscriptDraft] = useState("");
   const [processedSignals, setProcessedSignals] = useState<string[]>([]);
   const [recapVisible, setRecapVisible] = useState(true);
+  const [crmSyncStatus, setCrmSyncStatus] = useState<string | null>(null);
   const meeting =
     meetingList.find((item) => item.id === selectedMeetingId) ??
     meetingList.find((item) => item.clientId === selectedClient.id) ??
@@ -1662,6 +1725,14 @@ function MeetingAssistant({
 
         <section className="surface">
           <SectionTitle icon={FileText} title="Transcript Signals" />
+          <div className="live-capture-strip">
+            <RiskDot tone="good" />
+            <span>
+              <strong>Live capture is primary</strong>
+              <small>Ambient transcription is feeding the co-pilot; manual paste remains as a fallback or after-call import path.</small>
+            </span>
+            <StatusPill tone="good" label="Listening" />
+          </div>
           <div className="quote-list">
             {transcriptLines.map((line) => (
               <blockquote key={line}>{line}</blockquote>
@@ -1670,7 +1741,7 @@ function MeetingAssistant({
           <textarea
             className="transcript-input"
             onChange={(event) => setTranscriptDraft(event.target.value)}
-            placeholder="Paste transcript notes or meeting audio summary here"
+            placeholder="Fallback: paste transcript notes or meeting audio summary here"
             value={transcriptDraft}
           />
           <div className="toolbar-row">
@@ -1688,6 +1759,12 @@ function MeetingAssistant({
           {meetingCopilotSignals.map((signal) => (
             <Guardrail key={signal.label} label={signal.label} value={signal.value} tone={signal.tone} />
           ))}
+        </div>
+        <div className="toolbar-row">
+          <button className="primary-action" onClick={() => setCrmSyncStatus("CRM sync queued to Salesforce FSC with recap, source signals, and approval gates attached.")} type="button">
+            <Save size={16} /> Sync CRM-ready brief
+          </button>
+          {crmSyncStatus && <small className="sync-status">{crmSyncStatus}</small>}
         </div>
       </section>
 
@@ -1731,6 +1808,7 @@ function MeetingAssistant({
         <div className="recap-shell">
           <div>
             <strong>{selectedClient.name} follow-up draft</strong>
+            <small className="agent-attribution">Drafted by Meeting Agent - sources: transcript signals, client profile, compliance guardrails.</small>
             <p>
               Thank you for the conversation. We will confirm the open assumptions, route regulated language for review, and return with an advisor-approved action plan.
             </p>
@@ -1769,6 +1847,16 @@ function AgentSwarm({
   updateAgentAutonomy,
 }: AgentSwarmProps) {
   const [draftInstructions, setDraftInstructions] = useState<Record<string, string>>({});
+  const [activityFilter, setActivityFilter] = useState("All");
+  const agentActivityEvents = auditEvents.slice(0, 6);
+  const filteredAgentActivity =
+    activityFilter === "All" ? agentActivityEvents : agentActivityEvents.filter((event) => event.category === activityFilter);
+  const activityOutcome = (event: AuditEvent) => {
+    if (event.title.includes("Blocked")) return { label: "Escalated", tone: "danger" as StatusTone };
+    if (event.category === "System") return { label: "Sealed", tone: "neutral" as StatusTone };
+    if (event.category === "Compliance") return { label: "Blocked", tone: "warn" as StatusTone };
+    return { label: "Completed", tone: "good" as StatusTone };
+  };
 
   return (
     <div className="view-stack">
@@ -1846,10 +1934,37 @@ function AgentSwarm({
       </section>
 
       <section className="surface">
-        <SectionTitle icon={Activity} title="Agent Activity Log" />
-        <AuditList
-          events={auditEvents.filter((event) => event.category === "AI" || event.actor.includes("Agent")).slice(0, 6)}
-        />
+        <div className="section-toolbar">
+          <SectionTitle icon={Activity} title="Agent Activity Log" />
+          <div className="segmented local-tabs">
+            {["All", "AI", "Human", "Compliance", "System"].map((item) => (
+              <button
+                className={clsx(activityFilter === item && "active")}
+                key={item}
+                onClick={() => setActivityFilter(item)}
+                type="button"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="audit-list">
+          {filteredAgentActivity.map((event) => {
+            const outcome = activityOutcome(event);
+
+            return (
+              <div className="audit-row agent-activity-row" key={event.id}>
+                <span className="audit-time">{event.time}</span>
+                <span>
+                  <strong>{event.title}</strong>
+                  <small>{event.actor} - {event.detail}</small>
+                </span>
+                <StatusPill tone={outcome.tone} label={outcome.label} />
+              </div>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
@@ -1877,14 +1992,18 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
       <div className="review-grid">
         {reviews.map((review) => {
           const client = clients.find((item) => item.id === review.clientId);
+          const isSlaUrgent = review.status === "Open" && review.severity === "danger";
           return (
-            <article className="review-panel" key={review.id}>
+            <article className={clsx("review-panel", isSlaUrgent && "sla-urgent")} key={review.id}>
               <div className="recommendation-top">
                 <div>
                   <strong>{review.title}</strong>
                   <small>{client?.household} - {review.category}</small>
                 </div>
-                <StatusPill tone={review.severity} label={review.status} />
+                <div className="status-stack">
+                  <StatusPill tone={review.severity} label={review.status} />
+                  {isSlaUrgent && <StatusPill tone="danger" label="37m SLA" />}
+                </div>
               </div>
               <p>{review.evidence}</p>
               <div className="approval-actions left">
@@ -1924,6 +2043,25 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
           {regTechControls.map((control) => (
             <Guardrail key={control.label} label={control.label} value={control.value} tone={control.tone} />
           ))}
+        </div>
+        <div className="regtech-detail-grid">
+          <article className="regtech-detail-card">
+            <div className="recommendation-top">
+              <strong>Conflict graph drill-down</strong>
+              <StatusPill tone="danger" label="11.8% overlap" />
+            </div>
+            <MiniMeta label="Households" value="Chen Family Office + Ortega Holdings" />
+            <MiniMeta label="Exposure" value="Private credit sleeve overlaps two model portfolios and one proprietary fund." />
+            <MiniMeta label="Recommended action" value="Route allocation memo to compliance and require conflict disclosure before client-ready delivery." />
+          </article>
+          <article className="regtech-detail-card redline-card">
+            <div className="recommendation-top">
+              <strong>Auto-redline prepared</strong>
+              <StatusPill tone="info" label="Ready" />
+            </div>
+            <MiniMeta label="Before" value="The acquisition will close in Q3, creating a clear sale window." />
+            <MiniMeta label="After" value="If the acquisition closes as currently described, we can evaluate a staged sale window after advisor and compliance review." />
+          </article>
         </div>
       </section>
 
@@ -1969,12 +2107,55 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
   );
 }
 
-function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
+function PortfolioManager({
+  selectedClient,
+  setActiveView,
+}: {
+  selectedClient: Client;
+  setActiveView: (view: ViewKey) => void;
+}) {
   const totalPortfolio = sum(portfolioAssets.map((asset) => asset.value));
   const [salePercent, setSalePercent] = useState(12);
   const [liquidityMonths, setLiquidityMonths] = useState(18);
   const [period, setPeriod] = useState("YTD");
+  const [portfolioAction, setPortfolioAction] = useState<string | null>(null);
   const projectedTaxSavings = Math.round(salePercent * 150000);
+  const planARisk = Math.max(8, 28 - salePercent);
+  const planBRisk = Math.max(15, 22 - Math.round(salePercent * 0.35));
+  const stressRunway = Math.max(6, liquidityMonths - 5);
+  const liveScenarioComparisons = [
+    {
+      plan: "Plan A",
+      title: "Q3 staged sale",
+      tax: `${formatFullMoney(projectedTaxSavings)} estimated savings`,
+      compliance: "Reg BI rationale complete",
+      risk: `Single issuer drops to ${planARisk}%`,
+      tone: planARisk <= 16 ? "good" : "warn",
+    },
+    {
+      plan: "Plan B",
+      title: "Q4 delayed sale",
+      tax: `${formatFullMoney(Math.round(projectedTaxSavings * 0.62))} estimated savings`,
+      compliance: "Needs updated acquisition assumptions",
+      risk: `Single issuer remains at ${planBRisk}%`,
+      tone: planBRisk < 15 ? "good" : "warn",
+    },
+    {
+      plan: "Stress",
+      title: "15% equity drawdown",
+      tax: "Loss harvesting window opens",
+      compliance: "Client memo requires hypothetical performance disclosure",
+      risk: `Liquidity runway falls to ${stressRunway} months`,
+      tone: stressRunway < 14 ? "danger" : "warn",
+    },
+  ] satisfies Array<{
+    plan: string;
+    title: string;
+    tax: string;
+    compliance: string;
+    risk: string;
+    tone: StatusTone;
+  }>;
 
   return (
     <div className="view-stack">
@@ -2046,8 +2227,16 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
       <div className="three-column">
         <ScenarioCard title="Tax-aware sale" value={formatFullMoney(projectedTaxSavings)} detail={`${salePercent}% staged sale with charitable lot harvesting.`} tone="good" />
         <ScenarioCard title="Liquidity stress" value={`${liquidityMonths - 4} mo`} detail="Private call plus care reserve remains funded." tone="warn" />
-        <ScenarioCard title="Held-away cleanup" value="$3.9M" detail="Insurance policy requires beneficiary and fee review." tone="danger" />
+        <ScenarioCard
+          actionLabel="Request policy docs"
+          detail="Insurance policy requires beneficiary and fee review."
+          onAction={() => setPortfolioAction("Held-away insurance policy document request queued for Walker Legacy Trust.")}
+          title="Held-away cleanup"
+          tone="danger"
+          value="$3.9M"
+        />
       </div>
+      {portfolioAction && <div className="inline-form success-form">{portfolioAction}</div>}
 
       <section className="surface">
         <SectionTitle icon={SlidersHorizontal} title="Scenario Model Inputs" />
@@ -2068,7 +2257,7 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
       <section className="surface future-surface">
         <SectionTitle icon={BarChart3} title="Scenario Stress Comparison" />
         <div className="scenario-comparison-grid">
-          {scenarioComparisons.map((scenario) => (
+          {liveScenarioComparisons.map((scenario) => (
             <article className="scenario-comparison-card" key={scenario.plan}>
               <div className="recommendation-top">
                 <span>
@@ -2080,6 +2269,11 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
               <MiniMeta label="Tax" value={scenario.tax} />
               <MiniMeta label="Compliance" value={scenario.compliance} />
               <MiniMeta label="Risk" value={scenario.risk} />
+              {scenario.tone !== "good" && (
+                <button className="secondary-action compact-action" onClick={() => setActiveView("compliance")} type="button">
+                  Route to compliance
+                </button>
+              )}
             </article>
           ))}
         </div>
@@ -2121,7 +2315,17 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
   const [teamSelection, setTeamSelection] = useState("Mina Patel");
   const [removedMember, setRemovedMember] = useState<string | null>(null);
   const [delegationDecision, setDelegationDecision] = useState<string | null>(null);
-  const people = [...team, ...extraTeam];
+  const [playbookOpen, setPlaybookOpen] = useState(false);
+  const onboardingMember: TeamMember = {
+    id: "tm-priya-onboarding",
+    name: "Priya Shah",
+    role: "Associate Advisor - Onboarding",
+    capacity: 42,
+    focus: "Onboarding: skill-matched for Walker document prep",
+    risk: "info",
+  };
+  const priyaAdded = extraTeam.some((member) => member.name === "Priya Shah");
+  const people = [...team, ...(priyaAdded ? extraTeam : [onboardingMember, ...extraTeam])];
   const humanTasks = [
     {
       id: "human-1",
@@ -2231,23 +2435,25 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
         <SectionTitle icon={ClipboardCheck} title="Workload Board" />
         <div className="asset-table">
           {actions.map((action) => (
-            <div className="asset-row" key={action.id}>
+            <div className={clsx("asset-row", action.due === "Today" && "urgent-task")} key={action.id}>
               <span>
                 <strong>{action.title}</strong>
                 <small className="workload-task-description">{clients.find((client) => client.id === action.clientId)?.household} - {action.detail}</small>
               </span>
               <span className="numeric">{action.owner}</span>
+              {action.due === "Today" && <StatusPill tone="danger" label="Urgent" />}
               <StatusPill tone={action.risk} label={action.due} />
               <StatusPill tone={action.status === "Approved" ? "good" : action.status === "Pending" ? "warn" : "neutral"} label={action.status} />
             </div>
           ))}
           {humanTasks.map((task) => (
-            <div className="asset-row human-task" key={task.id}>
+            <div className={clsx("asset-row human-task", task.due === "Today" && "urgent-task")} key={task.id}>
               <span>
                 <strong>{task.title}</strong>
                 <small className="workload-task-description">{task.detail}</small>
               </span>
               <span className="numeric">{task.owner}</span>
+              {task.due === "Today" && <StatusPill tone="danger" label="Urgent" />}
               <StatusPill tone={task.risk} label={task.due} />
               <StatusPill tone={task.risk} label={task.status} />
             </div>
@@ -2262,6 +2468,22 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
             <Guardrail key={signal.label} label={signal.label} value={signal.value} tone={signal.tone} />
           ))}
         </div>
+        <div className="toolbar-row">
+          <button className="secondary-action" onClick={() => setPlaybookOpen((value) => !value)} type="button">
+            <FileText size={16} /> {playbookOpen ? "Hide playbook" : "View playbook"}
+          </button>
+        </div>
+        {playbookOpen && (
+          <div className="inline-form playbook-panel">
+            <div className="form-note">
+              <strong>Founder liquidity playbook</strong>
+              <small>Indexed from Sarah Mitchell's Chen liquidity rationale for future founder-liquidity cases.</small>
+            </div>
+            <MiniMeta label="Pattern" value="Sequence tax scenario, family governance agenda, and compliance language review before client recap." />
+            <MiniMeta label="Reusable prompt" value="Compare sale timing against charitable lot strategy and family council readiness." />
+            <MiniMeta label="Audience" value="Junior advisors and associate advisors handling concentrated-stock liquidity events." />
+          </div>
+        )}
       </section>
 
       <section className="surface">
@@ -2866,12 +3088,16 @@ function ControlItem({ detail, title }: { detail: string; title: string }) {
 }
 
 function ScenarioCard({
+  actionLabel,
   detail,
+  onAction,
   title,
   tone,
   value,
 }: {
+  actionLabel?: string;
   detail: string;
+  onAction?: () => void;
   title: string;
   tone: StatusTone;
   value: string;
@@ -2881,6 +3107,11 @@ function ScenarioCard({
       <span>{title}</span>
       <strong>{value}</strong>
       <p>{detail}</p>
+      {actionLabel && onAction && (
+        <button className="secondary-action compact-action" onClick={onAction} type="button">
+          {actionLabel}
+        </button>
+      )}
     </article>
   );
 }
