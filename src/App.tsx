@@ -358,6 +358,22 @@ type SearchResult = {
   clientId?: string;
 };
 
+type UiTheme = "Aether" | "MUI";
+
+const themeOptions: Array<{
+  label: UiTheme;
+  detail: string;
+}> = [
+  {
+    label: "Aether",
+    detail: "Institutional workstation",
+  },
+  {
+    label: "MUI",
+    detail: "Material premium",
+  },
+];
+
 const roleCopy: Record<Role, { title: string; detail: string }> = {
   Advisor: {
     title: "Advisor operating mode",
@@ -376,6 +392,10 @@ const roleCopy: Record<Role, { title: string; detail: string }> = {
 function App() {
   const [activeView, setActiveView] = useState<ViewKey>("dashboard");
   const [role, setRole] = useState<Role>("Advisor");
+  const [uiTheme, setUiTheme] = useState<UiTheme>(() => {
+    const storedTheme = window.localStorage.getItem("aether-ui-theme");
+    return storedTheme === "MUI" ? "MUI" : "Aether";
+  });
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [agentHealthOpen, setAgentHealthOpen] = useState(false);
@@ -690,6 +710,11 @@ function App() {
     }
   };
 
+  const selectUiTheme = (nextTheme: UiTheme) => {
+    setUiTheme(nextTheme);
+    window.localStorage.setItem("aether-ui-theme", nextTheme);
+  };
+
   const renderView = () => {
     switch (activeView) {
       case "dashboard":
@@ -766,7 +791,7 @@ function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={clsx("app-shell", uiTheme === "MUI" ? "theme-mui" : "theme-aether")}>
       <aside className="sidebar">
         <div className="brand-lockup">
           <div className="brand-mark">
@@ -823,6 +848,26 @@ function App() {
           <small className="sidebar-help">
             {toneLabel[selectedClient.retentionRisk]} retention signal from meetings, document gaps, and next-gen sentiment.
           </small>
+        </div>
+
+        <div className="theme-switcher" aria-label="UI theme switcher">
+          <div>
+            <div className="eyebrow">UI Theme</div>
+            <small className="sidebar-help">{uiTheme === "MUI" ? "Material UI inspired tokens" : "Aether advisor workstation"}</small>
+          </div>
+          <div className="theme-options">
+            {themeOptions.map((option) => (
+              <button
+                className={clsx(uiTheme === option.label && "active")}
+                key={option.label}
+                onClick={() => selectUiTheme(option.label)}
+                title={option.detail}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 
