@@ -13,6 +13,10 @@ Aether Advisor OS is a desktop-first wealth advisor operating console. This prot
 - Team OS with capacity risk and delegation rules.
 - Governance Settings for access, records, AI policy, and data sources.
 
+## Roadmap
+
+The sequenced product roadmap is captured in [`PRODUCT_ROADMAP.md`](./PRODUCT_ROADMAP.md). It prioritizes Phase 0 foundation work before advanced AI and portfolio features so the product can move from prototype surface to production deployment.
+
 ## Implementation
 
 - React 19, TypeScript, Vite.
