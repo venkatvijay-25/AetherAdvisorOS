@@ -133,6 +133,224 @@ const neutralProseStyle: CSSProperties = {
   WebkitTextFillColor: "#64748b",
 };
 
+const predictiveSignals = [
+  {
+    title: "Take action: stage Chen 10b5-1 plan",
+    detail: "Projected risk delta improves 14 points and lowers single-issuer exposure from 20% to 16%.",
+    meta: "+14 risk delta",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Skip action: Walker trustee packet",
+    detail: "Retention risk is projected to rise from Critical to Escalated if no attorney packet is sent before tomorrow.",
+    meta: "24h window",
+    tone: "danger" as StatusTone,
+  },
+  {
+    title: "Advisor calibration",
+    detail: "Sarah accepts governance recommendations 83% of the time, so family-council confidence is auto-raised 6 points.",
+    meta: "self-calibrating",
+    tone: "info" as StatusTone,
+  },
+];
+
+const priorityAlerts = [
+  {
+    title: "Compliance language waiting on review",
+    detail: "Chen acquisition recap has client-ready language blocked by Reg BI rationale.",
+    cta: "Review",
+    view: "compliance" as ViewKey,
+    tone: "warn" as StatusTone,
+  },
+  {
+    title: "Mina Patel capacity block",
+    detail: "Walker packet is blocked and Mina is above the 85% delegation threshold.",
+    cta: "Delegate",
+    view: "team" as ViewKey,
+    tone: "danger" as StatusTone,
+  },
+  {
+    title: "Morning digest ready",
+    detail: "Top three actions are queued for advisor digest before market open.",
+    cta: "Open",
+    view: "dashboard" as ViewKey,
+    tone: "info" as StatusTone,
+  },
+];
+
+const wealthGraphSignals = [
+  {
+    label: "Estate flow simulation",
+    value: "$18.4M",
+    detail: "Assets projected to second-generation trusts under current charter assumptions.",
+    tone: "info" as StatusTone,
+  },
+  {
+    label: "Next-gen engagement",
+    value: "+11%",
+    detail: "Avery engagement trend is improving across meeting attendance and document responsiveness.",
+    tone: "good" as StatusTone,
+  },
+  {
+    label: "Governance readiness",
+    value: "82",
+    detail: "Composite score across participation, roles, unresolved documents, and succession clarity.",
+    tone: "warn" as StatusTone,
+  },
+];
+
+const meetingCopilotSignals = [
+  {
+    label: "Whisper prompt",
+    value: "Avery mentioned governance. Suggest family council agenda before tax discussion.",
+    tone: "info" as StatusTone,
+  },
+  {
+    label: "Audio sentiment",
+    value: "Elaine is steady; Avery shows rising concern when liquidity timing is discussed.",
+    tone: "warn" as StatusTone,
+  },
+  {
+    label: "CRM-ready brief",
+    value: "Zero-click recap can sync after advisor and compliance approval gates clear.",
+    tone: "good" as StatusTone,
+  },
+];
+
+const scenarioComparisons = [
+  {
+    plan: "Plan A",
+    title: "Q3 staged sale",
+    tax: "$1.8M estimated savings",
+    compliance: "Reg BI rationale complete",
+    risk: "Single issuer drops to 16%",
+    tone: "good" as StatusTone,
+  },
+  {
+    plan: "Plan B",
+    title: "Q4 delayed sale",
+    tax: "$1.1M estimated savings",
+    compliance: "Needs updated acquisition assumptions",
+    risk: "Single issuer remains above IPS range",
+    tone: "warn" as StatusTone,
+  },
+  {
+    plan: "Stress",
+    title: "15% equity drawdown",
+    tax: "Loss harvesting window opens",
+    compliance: "Client memo requires hypothetical performance disclosure",
+    risk: "Liquidity runway falls to 13 months",
+    tone: "danger" as StatusTone,
+  },
+];
+
+const regTechControls = [
+  {
+    label: "Rule monitor",
+    value: "SEC marketing update mapped to two open hypothetical-performance reviews.",
+    tone: "warn" as StatusTone,
+  },
+  {
+    label: "Conflict graph",
+    value: "Cross-household overlap detected in concentrated private credit allocation.",
+    tone: "danger" as StatusTone,
+  },
+  {
+    label: "Auto-redline",
+    value: "Suggested rewrite prepared for acquisition certainty language in Chen recap.",
+    tone: "info" as StatusTone,
+  },
+  {
+    label: "SLA timer",
+    value: "Critical reviews escalate at 2 hours; current oldest item has 37 minutes left.",
+    tone: "good" as StatusTone,
+  },
+];
+
+const teamIntelligenceSignals = [
+  {
+    label: "Best delegate",
+    value: "Priya Shah matches document-prep skill tags and can absorb Walker packet review after onboarding.",
+    tone: "info" as StatusTone,
+  },
+  {
+    label: "Advisor analytics",
+    value: "Sarah leads retention-sensitive households with 94% on-time response and $72.4M assigned AUM.",
+    tone: "good" as StatusTone,
+  },
+  {
+    label: "Playbook capture",
+    value: "Chen liquidity rationale is indexed for future founder-liquidity cases and junior advisor review.",
+    tone: "warn" as StatusTone,
+  },
+];
+
+const futureReadinessValidation = [
+  {
+    title: "Predictive Intelligence Layer",
+    surface: "Dashboard",
+    roadmap: "#06, #07, #14, #21",
+    status: "Added visible preview",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Voice & Multimodal Meeting OS",
+    surface: "Meeting",
+    roadmap: "#05, #25",
+    status: "Expanded P0/P2 scope",
+    tone: "info" as StatusTone,
+  },
+  {
+    title: "Generational Wealth Graph",
+    surface: "Client Hub",
+    roadmap: "#07, #14, #26",
+    status: "Added visible preview",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Scenario & Stress Testing",
+    surface: "Portfolio",
+    roadmap: "#12, #16, #17, #30",
+    status: "Added comparison matrix",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Intelligent Notifications",
+    surface: "Dashboard",
+    roadmap: "#03, #08, #17",
+    status: "Added alert inbox",
+    tone: "info" as StatusTone,
+  },
+  {
+    title: "Client-Facing Portal",
+    surface: "Client role",
+    roadmap: "#13, #26",
+    status: "Validated and clarified",
+    tone: "warn" as StatusTone,
+  },
+  {
+    title: "Compliance Automation & RegTech",
+    surface: "Compliance",
+    roadmap: "#10, #19, #20, #23",
+    status: "Added RegTech layer",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Team Intelligence",
+    surface: "Team OS",
+    roadmap: "#15, #18, #24",
+    status: "Added capacity intelligence",
+    tone: "good" as StatusTone,
+  },
+  {
+    title: "Data Fabric & Integrations",
+    surface: "Roadmap",
+    roadmap: "#01, #02, #09, #29",
+    status: "Added Open API track",
+    tone: "info" as StatusTone,
+  },
+];
+
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -884,6 +1102,42 @@ function Dashboard({
         </section>
       )}
 
+      <div className="two-column compact">
+        <section className="surface future-surface">
+          <SectionTitle icon={Sparkles} title="Predictive Intelligence" />
+          <div className="future-signal-list">
+            {predictiveSignals.map((signal) => (
+              <div className="future-signal-row" key={signal.title}>
+                <RiskDot tone={signal.tone} />
+                <span>
+                  <strong>{signal.title}</strong>
+                  <small>{signal.detail}</small>
+                </span>
+                <StatusPill tone={signal.tone} label={signal.meta} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="surface future-surface">
+          <SectionTitle icon={Activity} title="Priority Alert Inbox" />
+          <div className="future-signal-list">
+            {priorityAlerts.map((alert) => (
+              <div className="future-alert-row" key={alert.title}>
+                <RiskDot tone={alert.tone} />
+                <span>
+                  <strong>{alert.title}</strong>
+                  <small>{alert.detail}</small>
+                </span>
+                <button className="secondary-action compact-action" onClick={() => setActiveView(alert.view)} type="button">
+                  {alert.cta}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
       <div className="two-column">
         <section className="surface">
           <SectionTitle icon={CalendarDays} title="Advisor Day Plan" />
@@ -1095,6 +1349,25 @@ function ClientHub({
         </section>
       </div>
 
+      <section className="surface future-surface">
+        <SectionTitle icon={Network} title="Generational Wealth Graph" />
+        <div className="wealth-graph-grid">
+          {wealthGraphSignals.map((signal) => (
+            <article className="wealth-graph-card" key={signal.label}>
+              <div className="recommendation-top">
+                <span>
+                  <small>{signal.label}</small>
+                  <strong>{signal.value}</strong>
+                </span>
+                <StatusPill tone={signal.tone} label={toneLabel[signal.tone]} />
+              </div>
+              <p>{signal.detail}</p>
+              <ProgressBar value={signal.label === "Governance readiness" ? 82 : signal.label === "Next-gen engagement" ? 71 : 64} tone={signal.tone} />
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="two-column">
         <section className="surface">
           <SectionTitle icon={CalendarPlus} title="Life Event Timeline" />
@@ -1269,6 +1542,17 @@ function ClientHub({
           )}
         </div>
       </section>
+
+      {role === "Client" && (
+        <section className="surface future-surface">
+          <SectionTitle icon={ShieldCheck} title="Controlled Client Portal" />
+          <div className="guardrail-grid">
+            <Guardrail label="Pending approval" value="Elaine can acknowledge the 10b5-1 plan only after advisor and compliance gates clear." tone="info" />
+            <Guardrail label="Family council room" value="Shared governance decisions, agenda items, and voting outcomes stay client-safe." tone="good" />
+            <Guardrail label="Document requests" value="Open estate and legal requests remain visible without internal AI reasoning." tone="warn" />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -1397,6 +1681,15 @@ function MeetingAssistant({
           </div>
         </section>
       </div>
+
+      <section className="surface future-surface">
+        <SectionTitle icon={Sparkles} title="Live Meeting Co-Pilot" />
+        <div className="guardrail-grid">
+          {meetingCopilotSignals.map((signal) => (
+            <Guardrail key={signal.label} label={signal.label} value={signal.value} tone={signal.tone} />
+          ))}
+        </div>
+      </section>
 
       <section className="surface">
         <SectionTitle icon={Bot} title="AI-Drafted Actions" />
@@ -1625,6 +1918,15 @@ function ComplianceShield({ auditEvents, reviews, updateReview }: ComplianceShie
         })}
       </div>
 
+      <section className="surface future-surface">
+        <SectionTitle icon={ShieldCheck} title="RegTech Automation Layer" />
+        <div className="guardrail-grid">
+          {regTechControls.map((control) => (
+            <Guardrail key={control.label} label={control.label} value={control.value} tone={control.tone} />
+          ))}
+        </div>
+      </section>
+
       <section className="surface">
         <div className="section-toolbar">
           <SectionTitle icon={FileCheck2} title="Immutable Audit Timeline" />
@@ -1760,6 +2062,26 @@ function PortfolioManager({ selectedClient }: { selectedClient: Client }) {
             <input max="30" min="6" onChange={(event) => setLiquidityMonths(Number(event.target.value))} type="range" value={liquidityMonths} />
             <strong>{liquidityMonths} months</strong>
           </label>
+        </div>
+      </section>
+
+      <section className="surface future-surface">
+        <SectionTitle icon={BarChart3} title="Scenario Stress Comparison" />
+        <div className="scenario-comparison-grid">
+          {scenarioComparisons.map((scenario) => (
+            <article className="scenario-comparison-card" key={scenario.plan}>
+              <div className="recommendation-top">
+                <span>
+                  <small>{scenario.plan}</small>
+                  <strong>{scenario.title}</strong>
+                </span>
+                <StatusPill tone={scenario.tone} label={toneLabel[scenario.tone]} />
+              </div>
+              <MiniMeta label="Tax" value={scenario.tax} />
+              <MiniMeta label="Compliance" value={scenario.compliance} />
+              <MiniMeta label="Risk" value={scenario.risk} />
+            </article>
+          ))}
         </div>
       </section>
 
@@ -1933,6 +2255,15 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
         </div>
       </section>
 
+      <section className="surface future-surface">
+        <SectionTitle icon={Activity} title="Team Intelligence & Capacity Optimization" />
+        <div className="guardrail-grid">
+          {teamIntelligenceSignals.map((signal) => (
+            <Guardrail key={signal.label} label={signal.label} value={signal.value} tone={signal.tone} />
+          ))}
+        </div>
+      </section>
+
       <section className="surface">
         <SectionTitle icon={BriefcaseBusiness} title="Delegation Rules" />
         <div className="policy-grid">
@@ -2097,6 +2428,27 @@ function RoadmapView() {
             <button className={clsx(phaseFilter === phase && "active")} key={phase} onClick={() => setPhaseFilter(phase)} type="button">
               {phase}
             </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="surface future-surface">
+        <SectionTitle icon={Sparkles} title="Future-Ready Validation" />
+        <p className="body-copy">
+          Validated against the latest review. Mobile and offline items are intentionally excluded here; the focus is desktop OS depth, data fabric, and regulated workflow readiness.
+        </p>
+        <div className="future-validation-grid">
+          {futureReadinessValidation.map((item) => (
+            <article className="future-validation-card" key={item.title}>
+              <div className="recommendation-top">
+                <strong>{item.title}</strong>
+                <StatusPill tone={item.tone} label={item.status} />
+              </div>
+              <div className="roadmap-meta-grid">
+                <MiniMeta label="Surface" value={item.surface} />
+                <MiniMeta label="Roadmap" value={item.roadmap} />
+              </div>
+            </article>
           ))}
         </div>
       </section>

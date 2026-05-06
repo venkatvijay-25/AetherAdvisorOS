@@ -3400,7 +3400,7 @@ button.search-result::after,
 button.health-row::after,
 button.meeting-card::after,
 button.team-panel::after {
-  content: "›";
+  content: ">";
   position: absolute;
   top: 50%;
   right: 12px;
@@ -3475,6 +3475,96 @@ button.team-panel:focus-visible,
 .agent-health:focus-visible {
   outline: 2px solid #bfdbfe;
   outline-offset: 2px;
+}
+
+/* Future-ready validation surfaces */
+.future-surface {
+  display: grid;
+  gap: 14px;
+}
+
+.future-signal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.future-signal-row,
+.future-alert-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.future-signal-row span,
+.future-alert-row span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.future-signal-row small,
+.future-alert-row small,
+.wealth-graph-card p,
+.future-validation-card small,
+.scenario-comparison-card small {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body);
+  line-height: var(--body-line-height);
+}
+
+.compact-action {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.wealth-graph-grid,
+.scenario-comparison-grid,
+.future-validation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wealth-graph-card,
+.scenario-comparison-card,
+.future-validation-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: var(--modern-card-shadow);
+}
+
+.wealth-graph-card .recommendation-top > span {
+  display: grid;
+  gap: 4px;
+}
+
+.wealth-graph-card .recommendation-top strong {
+  font-size: 22px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.scenario-comparison-card .mini-meta {
+  align-items: flex-start;
+  width: 100%;
+}
+
+.scenario-comparison-card .mini-meta strong {
+  line-height: 1.35;
+}
+
+.future-validation-card .roadmap-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 /* Roadmap execution surface */
