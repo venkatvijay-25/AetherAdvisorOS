@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type CSSProperties, useMemo, useState } from "react";
 import clsx from "clsx";
 import {
   Activity,
@@ -126,6 +126,11 @@ const roadmapStatusTone = (status: RoadmapFeatureStatus): StatusTone => {
   if (status === "In progress") return "info";
   if (status === "Blocked") return "danger";
   return "warn";
+};
+
+const neutralProseStyle: CSSProperties = {
+  color: "#64748b",
+  WebkitTextFillColor: "#64748b",
 };
 
 const formatMoney = (value: number) =>
@@ -1079,7 +1084,11 @@ function ClientHub({
                 </div>
                 <StatusPill tone={influenceTone(member.influence)} label={member.influence} />
                 <span>{member.priority}</span>
-                {index > 0 && <small className="family-map-description">{connectionNote(member.relation)}</small>}
+                {index > 0 && (
+                  <small className="family-map-description" style={neutralProseStyle}>
+                    <span style={neutralProseStyle}>{connectionNote(member.relation)}</span>
+                  </small>
+                )}
               </div>
             ))}
           </div>
@@ -1867,9 +1876,13 @@ function TeamOs({ actions }: { actions: MeetingAction[] }) {
                 <StatusPill tone={member.risk} label={`${member.capacity}%`} />
               </div>
               <ProgressBar value={member.capacity} tone={member.risk} />
-              <p className="advisor-client-list">{member.focus}</p>
-              <small className="capacity-explanation">
-                Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
+              <p className="advisor-client-list" style={neutralProseStyle}>
+                <span style={neutralProseStyle}>{member.focus}</span>
+              </p>
+              <small className="capacity-explanation" style={neutralProseStyle}>
+                <span style={neutralProseStyle}>
+                  Capacity means booked work against weekly service capacity. Above 85% triggers delegation review.
+                </span>
               </small>
             </button>
             {member.capacity > 85 && (

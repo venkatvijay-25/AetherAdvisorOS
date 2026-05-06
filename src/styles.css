@@ -3303,11 +3303,17 @@ small,
 
 /* Explicit neutral prose clamp for context-colored rows */
 html body .family-map-description,
+html body .family-map-description *,
 html body .advisor-client-list,
+html body .advisor-client-list *,
 html body .workload-task-description,
+html body .workload-task-description *,
 html body .life-event-sub-text,
+html body .life-event-sub-text *,
 html body .household-risk-description,
+html body .household-risk-description *,
 html body .ai-queue-description,
+html body .ai-queue-description *,
 html body .capacity-explanation,
 html body .capacity-explanation * {
   color: #64748b !important;
