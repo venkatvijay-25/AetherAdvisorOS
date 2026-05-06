@@ -180,7 +180,7 @@ const priorityAlerts = [
   {
     title: "Morning digest ready",
     detail: "Top three actions are queued for advisor digest before market open.",
-    cta: "Open",
+    cta: "Open digest",
     view: "dashboard" as ViewKey,
     tone: "info" as StatusTone,
   },
@@ -1461,11 +1461,11 @@ function ClientHub({
           </div>
           {uploadState && <div className="inline-form success-form">{uploadState}</div>}
           <div className="data-list">
-            {(clientRequests.length ? clientRequests : [`${selectedClient.household}: No active document requests`]).map((request) => (
+            {(clientRequests.length ? clientRequests : [`${selectedClient.household}: Suggested request: updated estate docs before board vote`]).map((request) => (
               <div className="data-row single" key={request}>
                 <span>
                   <strong>{request.replace(`${selectedClient.household}: `, "")}</strong>
-                  <small>{clientRequests.length ? "Request queued for client follow-up" : "All current document needs are visible below"}</small>
+                  <small>{clientRequests.length ? "Request queued for client follow-up" : "Acquisition vote is in 18 days; updated trust and estate documents should be collected before the board vote."}</small>
                 </span>
                 {!clientRequests.length && (
                   <button className="secondary-action compact-action" onClick={() => requestDocument("Estate documents before acquisition vote")} type="button">
@@ -1766,6 +1766,11 @@ function MeetingAssistant({
           </button>
           {crmSyncStatus && <small className="sync-status">{crmSyncStatus}</small>}
         </div>
+        <div className="crm-target-grid">
+          <MiniMeta label="CRM target" value="Salesforce FSC - Elaine Chen household record" />
+          <MiniMeta label="Delivery package" value="Recap draft, transcript signals, approval gates, and compliance status" />
+          <MiniMeta label="Sync status" value={crmSyncStatus ? "Queued with confirmation" : "Ready after advisor approval"} />
+        </div>
       </section>
 
       <section className="surface">
@@ -1808,7 +1813,7 @@ function MeetingAssistant({
         <div className="recap-shell">
           <div>
             <strong>{selectedClient.name} follow-up draft</strong>
-            <small className="agent-attribution">Drafted by Meeting Agent - sources: transcript signals, client profile, compliance guardrails.</small>
+            <small className="agent-attribution">Drafted by Meeting Agent - 09:41 - model Aether-Meeting-v2.3 - sources: transcript signals, client profile, compliance guardrails.</small>
             <p>
               Thank you for the conversation. We will confirm the open assumptions, route regulated language for review, and return with an advisor-approved action plan.
             </p>
@@ -2255,7 +2260,13 @@ function PortfolioManager({
       </section>
 
       <section className="surface future-surface">
-        <SectionTitle icon={BarChart3} title="Scenario Stress Comparison" />
+        <div className="section-toolbar">
+          <SectionTitle icon={BarChart3} title="Scenario Stress Comparison" />
+          <StatusPill tone="info" label="Live-linked" />
+        </div>
+        <p className="body-copy small">
+          Updated from Scenario Model Inputs: founder stock sale {salePercent}%, target liquidity runway {liquidityMonths} months.
+        </p>
         <div className="scenario-comparison-grid">
           {liveScenarioComparisons.map((scenario) => (
             <article className="scenario-comparison-card" key={scenario.plan}>
@@ -2266,6 +2277,7 @@ function PortfolioManager({
                 </span>
                 <StatusPill tone={scenario.tone} label={toneLabel[scenario.tone]} />
               </div>
+              <MiniMeta label="Input source" value={scenario.plan === "Stress" ? `${liquidityMonths} month runway slider` : `${salePercent}% founder sale slider`} />
               <MiniMeta label="Tax" value={scenario.tax} />
               <MiniMeta label="Compliance" value={scenario.compliance} />
               <MiniMeta label="Risk" value={scenario.risk} />
