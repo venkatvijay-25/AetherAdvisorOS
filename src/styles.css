@@ -3522,6 +3522,27 @@ button.team-panel:focus-visible,
   background: #ffffff;
 }
 
+.dismiss-action {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  color: var(--muted-strong);
+  border-color: #cbd5e1;
+}
+
+.dismiss-action svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  stroke: currentColor;
+}
+
+.dismiss-action:hover {
+  color: var(--red);
+  background: var(--red-soft);
+  border-color: #fecaca;
+}
+
 .future-signal-row small,
 .future-alert-row small,
 .wealth-graph-card p,
@@ -4182,6 +4203,23 @@ button.team-panel:focus-visible,
   font-size: 14px;
   font-weight: 600;
   text-transform: none;
+}
+
+.theme-mui .dismiss-action {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  color: var(--muted-strong);
+  background: #ffffff;
+  border-color: #d0d5dd;
+  border-radius: 10px;
+}
+
+.theme-mui .dismiss-action:hover {
+  color: var(--critical-text);
+  background: var(--critical-bg);
+  border-color: var(--critical-border);
 }
 
 .theme-mui .primary-action {

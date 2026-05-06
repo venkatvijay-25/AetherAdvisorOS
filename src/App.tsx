@@ -1158,12 +1158,13 @@ function Dashboard({
                     Mark done
                   </button>
                   <button
-                    className="icon-button subtle"
+                    aria-label={`Dismiss ${signal.title}`}
+                    className="icon-button subtle dismiss-action"
                     onClick={() => setDismissedPredictive((items) => [...items, signal.title])}
                     title="Dismiss prediction"
                     type="button"
                   >
-                    <X size={15} />
+                    <X aria-hidden="true" size={18} strokeWidth={2.8} />
                   </button>
                 </div>
               </div>
