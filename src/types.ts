@@ -10,6 +10,7 @@ export type ViewKey =
   | "compliance"
   | "portfolio"
   | "team"
+  | "roadmap"
   | "settings";
 
 export type NavItem = {
@@ -158,4 +159,23 @@ export type PortfolioAsset = {
   weight: number;
   risk: StatusTone;
   note: string;
+};
+
+export type RoadmapPhase = "P0" | "P1" | "P2" | "P3";
+
+export type RoadmapFeatureStatus = "Live in prototype" | "In progress" | "Ready to build" | "Blocked";
+
+export type RoadmapFeature = {
+  id: string;
+  number: string;
+  phase: RoadmapPhase;
+  title: string;
+  summary: string;
+  note: string;
+  outcome: string;
+  status: RoadmapFeatureStatus;
+  dependencies: string[];
+  surface: string;
+  impact: string;
+  effort: "Low" | "Medium" | "High";
 };

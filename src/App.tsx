@@ -45,6 +45,7 @@ import {
   initialMeetingActions,
   meetings,
   portfolioAssets,
+  roadmapFeatures,
   team,
 } from "./data/aetherData";
 import type {
@@ -58,6 +59,8 @@ import type {
   MeetingAction,
   NavItem,
   Role,
+  RoadmapFeatureStatus,
+  RoadmapPhase,
   StatusTone,
   TeamMember,
   ViewKey,
@@ -71,13 +74,14 @@ const navItems: NavItem[] = [
   { key: "compliance", label: "Compliance", icon: ShieldCheck },
   { key: "portfolio", label: "Portfolio", icon: Landmark },
   { key: "team", label: "Team OS", icon: BriefcaseBusiness },
+  { key: "roadmap", label: "Roadmap", icon: Target },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
 const navGroups: Array<{ label: string; keys: ViewKey[] }> = [
   { label: "Workspace", keys: ["dashboard", "clients", "meeting", "portfolio"] },
   { label: "Intelligence", keys: ["agents", "compliance"] },
-  { label: "Operations", keys: ["team", "settings"] },
+  { label: "Operations", keys: ["team", "roadmap", "settings"] },
 ];
 
 const toneLabel: Record<StatusTone, string> = {
@@ -92,6 +96,36 @@ const influenceTone = (influence: string): StatusTone => {
   if (influence === "High") return "good";
   if (influence === "Medium") return "info";
   return "neutral";
+};
+
+const roadmapPhaseCopy: Record<RoadmapPhase, { title: string; subtitle: string; tone: StatusTone }> = {
+  P0: {
+    title: "Foundation",
+    subtitle: "Ship before everything else",
+    tone: "danger",
+  },
+  P1: {
+    title: "Core Value",
+    subtitle: "Daily advisor impact",
+    tone: "info",
+  },
+  P2: {
+    title: "Competitive Edge",
+    subtitle: "6-12 month moat builders",
+    tone: "good",
+  },
+  P3: {
+    title: "Platform & Scale",
+    subtitle: "Year 2+ expansion",
+    tone: "neutral",
+  },
+};
+
+const roadmapStatusTone = (status: RoadmapFeatureStatus): StatusTone => {
+  if (status === "Live in prototype") return "good";
+  if (status === "In progress") return "info";
+  if (status === "Blocked") return "danger";
+  return "warn";
 };
 
 const formatMoney = (value: number) =>
@@ -518,6 +552,8 @@ function App() {
         return <PortfolioManager selectedClient={selectedClient} />;
       case "team":
         return <TeamOs actions={actions} />;
+      case "roadmap":
+        return <RoadmapView />;
       case "settings":
         return <SettingsView addAudit={addAudit} />;
       default:
@@ -2003,6 +2039,133 @@ function DelegationReview({
       </div>
       {decision && <div className="inline-form success-form">{decision}</div>}
     </section>
+  );
+}
+
+function RoadmapView() {
+  const [phaseFilter, setPhaseFilter] = useState<RoadmapPhase | "All">("P0");
+  const features = phaseFilter === "All"
+    ? roadmapFeatures
+    : roadmapFeatures.filter((feature) => feature.phase === phaseFilter);
+  const liveCount = roadmapFeatures.filter((feature) => feature.status === "Live in prototype").length;
+  const progressCount = roadmapFeatures.filter((feature) => feature.status === "In progress").length;
+  const blockedCount = roadmapFeatures.filter((feature) => feature.status === "Blocked").length;
+  const dependencyCount = roadmapFeatures.filter((feature) => feature.dependencies.length).length;
+
+  const dependencyLabel = (dependencyId: string) => {
+    const dependency = roadmapFeatures.find((feature) => feature.id === dependencyId);
+    return dependency ? `#${dependency.number}` : dependencyId;
+  };
+
+  return (
+    <div className="view-stack">
+      <ViewHeader
+        eyebrow="Product Roadmap"
+        title="P0-P3 Execution Plan"
+        subtitle="Sequenced by dependency gates so demo surfaces can become production capabilities."
+      />
+
+      <div className="metric-grid roadmap-metrics">
+        <MetricTile icon={Target} label="Roadmap features" value={`${roadmapFeatures.length}`} />
+        <MetricTile icon={Check} label="Live or in progress" tone="good" value={`${liveCount + progressCount}`} />
+        <MetricTile icon={LockKeyhole} label="Blocked by gates" tone="danger" value={`${blockedCount}`} />
+        <MetricTile icon={Network} label="Dependency-linked" tone="info" value={`${dependencyCount}`} />
+      </div>
+
+      <section className="surface roadmap-command">
+        <div>
+          <SectionTitle icon={SlidersHorizontal} title="Build Sequence" />
+          <p className="body-copy">
+            Phase 0 is infrastructure: custodian feeds, CRM import, alerts, onboarding, and voice meeting capture. P1-P3 stay visible, but dependency-blocked work is marked clearly so high-impact features are not confused with production-ready features.
+          </p>
+        </div>
+        <div className="segmented local-tabs roadmap-tabs" aria-label="Roadmap phase filter">
+          {(["All", "P0", "P1", "P2", "P3"] as Array<RoadmapPhase | "All">).map((phase) => (
+            <button className={clsx(phaseFilter === phase && "active")} key={phase} onClick={() => setPhaseFilter(phase)} type="button">
+              {phase}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <div className="roadmap-phase-grid">
+        {(Object.keys(roadmapPhaseCopy) as RoadmapPhase[]).map((phase) => {
+          const phaseFeatures = roadmapFeatures.filter((feature) => feature.phase === phase);
+          const completed = phaseFeatures.filter((feature) => feature.status === "Live in prototype" || feature.status === "In progress").length;
+          const phaseCopy = roadmapPhaseCopy[phase];
+
+          return (
+            <article className={clsx("roadmap-phase-card", `tone-${phaseCopy.tone}`)} key={phase}>
+              <span className="roadmap-phase-code">{phase}</span>
+              <strong>{phaseCopy.title}</strong>
+              <small>{phaseCopy.subtitle}</small>
+              <ProgressBar value={Math.round((completed / phaseFeatures.length) * 100)} tone={phaseCopy.tone} />
+              <small>{completed} of {phaseFeatures.length} active in prototype or build track</small>
+            </article>
+          );
+        })}
+      </div>
+
+      <section className="surface">
+        <div className="section-toolbar">
+          <SectionTitle icon={ClipboardCheck} title={phaseFilter === "All" ? "All Features" : `${phaseFilter} Features`} />
+          <StatusPill tone="info" label={`${features.length} visible`} />
+        </div>
+        <div className="roadmap-list">
+          {features.map((feature) => {
+            const phaseCopy = roadmapPhaseCopy[feature.phase];
+            const dependencyText = feature.dependencies.length
+              ? feature.dependencies.map(dependencyLabel).join(", ")
+              : "None";
+
+            return (
+              <article className="roadmap-feature-row" key={feature.id}>
+                <div className="roadmap-index">
+                  <span>{feature.number}</span>
+                  <RiskDot tone={phaseCopy.tone} />
+                </div>
+                <div className="roadmap-feature-main">
+                  <div className="roadmap-feature-title">
+                    <span className={clsx("roadmap-phase-chip", `tone-${phaseCopy.tone}`)}>{feature.phase}</span>
+                    <strong>{feature.title}</strong>
+                  </div>
+                  <p>{feature.summary}</p>
+                  <div className="roadmap-meta-grid">
+                    <MiniMeta label="Surface" value={feature.surface} />
+                    <MiniMeta label="Dependencies" value={dependencyText} />
+                    <MiniMeta label="Effort" value={feature.effort} />
+                  </div>
+                </div>
+                <div className="roadmap-feature-status">
+                  <StatusPill tone={roadmapStatusTone(feature.status)} label={feature.status} />
+                  <span>{feature.note}</span>
+                  <strong>{feature.impact}</strong>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="surface">
+        <SectionTitle icon={Network} title="Dependency Gates" />
+        <div className="guardrail-grid">
+          <Guardrail label="#01 Custodian feeds" value="Unlocks tax, market triggers, IPS monitoring, and real scenarios." tone="danger" />
+          <Guardrail label="#02 CRM integration" value="Unlocks adoption, onboarding, household history, and practice analytics." tone="warn" />
+          <Guardrail label="#03 Notifications" value="Turns passive dashboard work into active OS alerts." tone="info" />
+          <Guardrail label="#05 Voice intelligence" value="Unlocks voice meeting prep and replaces manual transcript capture." tone="good" />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function MiniMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="mini-meta">
+      <small>{label}</small>
+      <strong>{value}</strong>
+    </span>
   );
 }
 

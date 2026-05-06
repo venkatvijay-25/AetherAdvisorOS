@@ -3470,3 +3470,153 @@ button.team-panel:focus-visible,
   outline: 2px solid #bfdbfe;
   outline-offset: 2px;
 }
+
+/* Roadmap execution surface */
+.roadmap-metrics .metric-tile {
+  min-height: 104px;
+}
+
+.roadmap-command {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.roadmap-command .body-copy {
+  max-width: 760px;
+}
+
+.roadmap-tabs {
+  flex: 0 0 auto;
+}
+
+.roadmap-phase-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roadmap-phase-card,
+.roadmap-feature-row {
+  background: #ffffff;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: var(--modern-card-shadow);
+}
+
+.roadmap-phase-card {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+}
+
+.roadmap-phase-card strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.roadmap-phase-card small,
+.roadmap-feature-row p,
+.roadmap-feature-status span,
+.mini-meta small {
+  color: var(--text-muted) !important;
+  font-size: var(--font-body);
+  line-height: var(--body-line-height);
+}
+
+.roadmap-phase-code,
+.roadmap-phase-chip {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.roadmap-list {
+  display: grid;
+  gap: 10px;
+}
+
+.roadmap-feature-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 190px;
+  gap: 16px;
+  align-items: start;
+  padding: 14px;
+}
+
+.roadmap-index {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.roadmap-feature-main {
+  display: grid;
+  gap: 9px;
+}
+
+.roadmap-feature-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap-feature-title strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.roadmap-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-meta {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.mini-meta strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.roadmap-feature-status {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  text-align: right;
+}
+
+.roadmap-feature-status strong {
+  color: var(--good-text);
+  font-size: 13px;
+}
+
+@media (max-width: 1180px) {
+  .roadmap-phase-grid,
+  .roadmap-feature-row,
+  .roadmap-command,
+  .roadmap-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmap-command {
+    display: grid;
+  }
+
+  .roadmap-feature-status {
+    justify-items: start;
+    text-align: left;
+  }
+}

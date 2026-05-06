@@ -11,6 +11,7 @@ Aether Advisor OS is a desktop-first wealth advisor operating console. This prot
 - Compliance Shield with review queue, audit trail, and regulatory control coverage.
 - Portfolio Manager with enterprise exposure, IPS exceptions, and scenario summaries.
 - Team OS with capacity risk and delegation rules.
+- Roadmap execution view with P0-P3 feature sequencing, dependency gates, and build status.
 - Governance Settings for access, records, AI policy, and data sources.
 
 ## Roadmap
